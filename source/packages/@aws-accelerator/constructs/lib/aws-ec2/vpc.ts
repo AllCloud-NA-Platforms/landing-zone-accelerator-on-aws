@@ -24,11 +24,7 @@ import { IRouteTable } from './route-table';
 import { VpnConnection } from './vpn-connection';
 import { CUSTOM_RESOURCE_PROVIDER_RUNTIME } from '@aws-accelerator/utils/lib/lambda';
 import { ILZAMetadata, MetadataKeys } from '@aws-accelerator/utils';
-import {
-  LookupValues,
-  LZAResourceLookup,
-  LZAResourceLookupType,
-} from '@aws-accelerator/accelerator/utils/lza-resource-lookup';
+import { LookupValues, LZAResourceLookup, LZAResourceLookupType } from '@aws-accelerator/accelerator';
 
 export interface ISubnet extends cdk.IResource {
   /**
@@ -751,6 +747,7 @@ abstract class VpcBase extends cdk.Resource implements IVpc {
       const logGroup = new cdk.aws_logs.LogGroup(this, 'FlowLogsGroup', {
         encryptionKey: options.encryptionKey,
         retention: options.logRetentionInDays,
+        removalPolicy: cdk.RemovalPolicy.RETAIN_ON_UPDATE_OR_DELETE,
       });
 
       const cfnFlowLog = new cdk.aws_ec2.CfnFlowLog(this, 'CloudWatchFlowLog', {

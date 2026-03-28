@@ -10,7 +10,7 @@
  *  OR CONDITIONS OF ANY KIND, express or implied. See the License for the specific language governing permissions
  *  and limitations under the License.
  */
-import { describe, it, beforeEach, expect, afterAll } from '@jest/globals';
+import { describe, it, beforeEach, expect, afterAll, beforeAll, test, vi, afterEach } from 'vitest';
 import {
   getNodeVersion,
   chunkArray,
@@ -76,7 +76,7 @@ describe('getNodeVersion', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
-    jest.resetModules();
+    vi.resetModules();
     process.env = { ...originalEnv };
   });
 
@@ -85,8 +85,8 @@ describe('getNodeVersion', () => {
   });
 
   it('should return the ACCELERATOR_NODE_VERSION when set and no input is provided', () => {
-    process.env['ACCELERATOR_NODE_VERSION'] = '19';
-    expect(getNodeVersion()).toBe(19);
+    process.env['ACCELERATOR_NODE_VERSION'] = '21';
+    expect(getNodeVersion()).toBe(21);
   });
 
   it('should return the default version when no input or env var is provided', () => {
@@ -108,8 +108,8 @@ describe('getNodeVersion', () => {
   });
 
   it('should prioritize input over environment variable', () => {
-    process.env['ACCELERATOR_NODE_VERSION'] = '19';
-    expect(getNodeVersion()).toBe(19);
+    process.env['ACCELERATOR_NODE_VERSION'] = '21';
+    expect(getNodeVersion()).toBe(21);
   });
 });
 
@@ -193,6 +193,10 @@ describe('getStsEndpoint', () => {
   it('should return correct endpoint for aws-iso-e partition', () => {
     const endpoint = getStsEndpoint('aws-iso-e', testRegion);
     expect(endpoint).toBe(`https://sts.${testRegion}.cloud.adc-e.uk`);
+  });
+  it('should return correct endpoint for aws-eusc partition', () => {
+    const endpoint = getStsEndpoint('aws-eusc', testRegion);
+    expect(endpoint).toBe(`https://sts.${testRegion}.amazonaws.eu`);
   });
 
   it('should return default endpoint for commercial AWS partition', () => {

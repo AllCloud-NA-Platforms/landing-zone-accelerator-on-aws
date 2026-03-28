@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`BucketReplication Construct(BucketReplication):  Snapshot Test 1`] = `
+exports[`BucketReplication > Construct(BucketReplication):  Snapshot Test 1`] = `
 {
   "Resources": {
     "BucketReplicationAwsAcceleratorCentralLogsBucketReplicationRole184AC22C": {
@@ -345,7 +345,7 @@ exports[`BucketReplication Construct(BucketReplication):  Snapshot Test 1`] = `
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -356,7 +356,7 @@ exports[`BucketReplication Construct(BucketReplication):  Snapshot Test 1`] = `
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",

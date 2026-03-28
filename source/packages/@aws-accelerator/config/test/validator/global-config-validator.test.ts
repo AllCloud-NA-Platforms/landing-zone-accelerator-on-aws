@@ -34,7 +34,7 @@ import {
   StackPolicyConfig,
 } from '../../lib/global-config';
 import { OrganizationConfig } from '../../lib/organization-config';
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { DeploymentTargets } from '../../lib/common';
 import { GlobalConfigValidator } from '../../validator/global-config-validator';
 import { IamConfig, RoleSetConfig } from '../../lib/iam-config';
@@ -49,8 +49,8 @@ describe('SecurityConfigValidator', () => {
   let mockIamConfig: IamConfig;
 
   beforeEach(() => {
-    jest.spyOn(GlobalConfig.prototype, 'getS3Object' as any).mockReturnValue({});
-    jest.spyOn(GlobalConfig.prototype, 'getSnsTopicNames').mockReturnValue([]);
+    vi.spyOn(GlobalConfig.prototype, 'getS3Object' as any).mockReturnValue({});
+    vi.spyOn(GlobalConfig.prototype, 'getSnsTopicNames').mockReturnValue([]);
 
     // Mock configs
     mockSecurityConfig = createSecurityConfig() as SecurityConfig;
@@ -73,7 +73,67 @@ describe('SecurityConfigValidator', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
+  });
+
+  describe('validateAccessLogBucket', () => {
+    it('should fail if no replacement variables present in imported access log bucket name', () => {
+      const globalConfig = {
+        ...createGlobalConfig(),
+        logging: {
+          cloudtrail: {} as CloudTrailConfig,
+          sessionManager: {} as SessionManagerConfig,
+          account: 'LogArchive',
+          accessLogBucket: {
+            importedBucket: {
+              name: 'Imported-Access-Log-Bucket',
+            },
+          },
+        },
+      } as GlobalConfig;
+
+      expect(
+        () =>
+          new GlobalConfigValidator(
+            globalConfig,
+            mockAccountsConfig,
+            mockIamConfig,
+            mockOrganizationConfig,
+            mockSecurityConfig,
+            mockConfigDir,
+          ),
+      ).toThrow(
+        'Imported Access log bucket name for Imported-Access-Log-Bucket must include replacement variables ACCOUNT_ID and REGION',
+      );
+    });
+
+    it('should pass if replacement variables present in imported access log bucket name', () => {
+      const globalConfig = {
+        ...createGlobalConfig(),
+        logging: {
+          cloudtrail: {} as CloudTrailConfig,
+          sessionManager: {} as SessionManagerConfig,
+          account: 'LogArchive',
+          accessLogBucket: {
+            importedBucket: {
+              name: 'Imported-Access-Log-Bucket-${ACCOUNT_ID}-${REGION}',
+            },
+          },
+        },
+      } as GlobalConfig;
+
+      expect(
+        () =>
+          new GlobalConfigValidator(
+            globalConfig,
+            mockAccountsConfig,
+            mockIamConfig,
+            mockOrganizationConfig,
+            mockSecurityConfig,
+            mockConfigDir,
+          ),
+      ).toBeDefined();
+    });
   });
 
   describe('validateStackPolicy', () => {
@@ -174,6 +234,209 @@ describe('SecurityConfigValidator', () => {
       expect(result).toBeFalsy();
     });
   });
+
+  describe('validateControlTowerAccountAutoEnrollment', () => {
+    it('should pass when accountAutoEnrollment is enabled with version 3.1', () => {
+      const globalConfig = {
+        ...createGlobalConfig(),
+        controlTower: {
+          enable: true,
+          landingZone: {
+            version: '3.1',
+            accountAutoEnrollment: true,
+            logging: {
+              loggingBucketRetentionDays: 365,
+              accessLoggingBucketRetentionDays: 365,
+              organizationTrail: true,
+            },
+            security: {
+              enableIdentityCenterAccess: true,
+            },
+          },
+        },
+      } as GlobalConfig;
+
+      expect(
+        () =>
+          new GlobalConfigValidator(
+            globalConfig,
+            mockAccountsConfig,
+            mockIamConfig,
+            mockOrganizationConfig,
+            mockSecurityConfig,
+            mockConfigDir,
+          ),
+      ).toBeDefined();
+    });
+
+    it('should pass when accountAutoEnrollment is enabled with version 3.3', () => {
+      const globalConfig = {
+        ...createGlobalConfig(),
+        controlTower: {
+          enable: true,
+          landingZone: {
+            version: '3.3',
+            accountAutoEnrollment: true,
+            logging: {
+              loggingBucketRetentionDays: 365,
+              accessLoggingBucketRetentionDays: 365,
+              organizationTrail: true,
+            },
+            security: {
+              enableIdentityCenterAccess: true,
+            },
+          },
+        },
+      } as GlobalConfig;
+
+      expect(
+        () =>
+          new GlobalConfigValidator(
+            globalConfig,
+            mockAccountsConfig,
+            mockIamConfig,
+            mockOrganizationConfig,
+            mockSecurityConfig,
+            mockConfigDir,
+          ),
+      ).toBeDefined();
+    });
+
+    it('should fail when accountAutoEnrollment is enabled with version 3.0', () => {
+      const globalConfig = {
+        ...createGlobalConfig(),
+        controlTower: {
+          enable: true,
+          landingZone: {
+            version: '3.0',
+            accountAutoEnrollment: true,
+            logging: {
+              loggingBucketRetentionDays: 365,
+              accessLoggingBucketRetentionDays: 365,
+              organizationTrail: true,
+            },
+            security: {
+              enableIdentityCenterAccess: true,
+            },
+          },
+        },
+      } as GlobalConfig;
+
+      expect(
+        () =>
+          new GlobalConfigValidator(
+            globalConfig,
+            mockAccountsConfig,
+            mockIamConfig,
+            mockOrganizationConfig,
+            mockSecurityConfig,
+            mockConfigDir,
+          ),
+      ).toThrow(
+        'Account auto-enrollment requires AWS Control Tower Landing Zone version 3.1 or above. Current version: 3.0',
+      );
+    });
+
+    it('should fail when accountAutoEnrollment is enabled with version 2.9', () => {
+      const globalConfig = {
+        ...createGlobalConfig(),
+        controlTower: {
+          enable: true,
+          landingZone: {
+            version: '2.9',
+            accountAutoEnrollment: true,
+            logging: {
+              loggingBucketRetentionDays: 365,
+              accessLoggingBucketRetentionDays: 365,
+              organizationTrail: true,
+            },
+            security: {
+              enableIdentityCenterAccess: true,
+            },
+          },
+        },
+      } as GlobalConfig;
+
+      expect(
+        () =>
+          new GlobalConfigValidator(
+            globalConfig,
+            mockAccountsConfig,
+            mockIamConfig,
+            mockOrganizationConfig,
+            mockSecurityConfig,
+            mockConfigDir,
+          ),
+      ).toThrow(
+        'Account auto-enrollment requires AWS Control Tower Landing Zone version 3.1 or above. Current version: 2.9',
+      );
+    });
+
+    it('should pass when accountAutoEnrollment is not enabled with version 3.0', () => {
+      const globalConfig = {
+        ...createGlobalConfig(),
+        controlTower: {
+          enable: true,
+          landingZone: {
+            version: '3.0',
+            accountAutoEnrollment: false,
+            logging: {
+              loggingBucketRetentionDays: 365,
+              accessLoggingBucketRetentionDays: 365,
+              organizationTrail: true,
+            },
+            security: {
+              enableIdentityCenterAccess: true,
+            },
+          },
+        },
+      } as GlobalConfig;
+
+      expect(
+        () =>
+          new GlobalConfigValidator(
+            globalConfig,
+            mockAccountsConfig,
+            mockIamConfig,
+            mockOrganizationConfig,
+            mockSecurityConfig,
+            mockConfigDir,
+          ),
+      ).toBeDefined();
+    });
+
+    it('should pass when accountAutoEnrollment is undefined with version 3.0', () => {
+      const globalConfig = {
+        ...createGlobalConfig(),
+        controlTower: {
+          enable: true,
+          landingZone: {
+            version: '3.0',
+            logging: {
+              loggingBucketRetentionDays: 365,
+              accessLoggingBucketRetentionDays: 365,
+              organizationTrail: true,
+            },
+            security: {
+              enableIdentityCenterAccess: true,
+            },
+          },
+        },
+      } as GlobalConfig;
+
+      expect(
+        () =>
+          new GlobalConfigValidator(
+            globalConfig,
+            mockAccountsConfig,
+            mockIamConfig,
+            mockOrganizationConfig,
+            mockSecurityConfig,
+            mockConfigDir,
+          ),
+      ).toBeDefined();
+    });
+  });
 });
 
 function createSecurityConfig(delegatedAdminAccount = 'Audit'): Partial<SecurityConfig> {
@@ -251,8 +514,8 @@ function createSecurityConfig(delegatedAdminAccount = 'Audit'): Partial<Security
 
 function createAccountsConfig(): Partial<AccountsConfig> {
   const accountConfig: Partial<AccountsConfig> = {
-    getAuditAccount: jest.fn().mockReturnValue({ name: 'Audit' }),
-    getAccountIds: jest.fn().mockReturnValue(['123456789012']),
+    getAuditAccount: vi.fn().mockReturnValue({ name: 'Audit' }),
+    getAccountIds: vi.fn().mockReturnValue(['123456789012']),
     mandatoryAccounts: [
       {
         name: 'LogArchive',
@@ -273,7 +536,7 @@ function createGlobalConfig(stackPolicy: StackPolicyConfig | undefined = undefin
 
   const globalConfig: Partial<GlobalConfig> = {
     controlTower: new ControlTowerConfig(),
-    getSnsTopicNames: jest.fn().mockReturnValue([]),
+    getSnsTopicNames: vi.fn().mockReturnValue([]),
     stackPolicy: stackPolicy,
     logging: loggingConig as LoggingConfig,
   };

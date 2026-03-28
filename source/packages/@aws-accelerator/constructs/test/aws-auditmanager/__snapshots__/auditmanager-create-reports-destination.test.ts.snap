@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`AuditManagerDefaultReportsDestination Construct(AuditManagerDefaultReportsDestination):  Snapshot Test 1`] = `
+exports[`AuditManagerDefaultReportsDestination > Construct(AuditManagerDefaultReportsDestination):  Snapshot Test 1`] = `
 {
   "Resources": {
     "AuditManagerDefaultReportsDestinationAFD20D60": {
@@ -92,7 +92,7 @@ exports[`AuditManagerDefaultReportsDestination Construct(AuditManagerDefaultRepo
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -103,7 +103,7 @@ exports[`AuditManagerDefaultReportsDestination Construct(AuditManagerDefaultRepo
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",

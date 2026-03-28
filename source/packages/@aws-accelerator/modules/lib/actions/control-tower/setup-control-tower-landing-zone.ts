@@ -50,8 +50,10 @@ export abstract class SetupControlTowerLandingZoneModule {
       solutionId: params.runnerParameters.solutionId,
       credentials: params.moduleRunnerParameters.managementAccountCredentials,
       dryRun: params.runnerParameters.dryRun,
+      ssmParamPrefix: params.moduleRunnerParameters.resourcePrefixes.ssmParamName,
       configuration: {
         version: landingZoneConfiguration.version,
+        accountAutoEnrollment: landingZoneConfiguration.accountAutoEnrollment,
         enabledRegions: params.moduleRunnerParameters.configs.globalConfig.enabledRegions,
         logging: {
           organizationTrail: landingZoneConfiguration.logging.organizationTrail,

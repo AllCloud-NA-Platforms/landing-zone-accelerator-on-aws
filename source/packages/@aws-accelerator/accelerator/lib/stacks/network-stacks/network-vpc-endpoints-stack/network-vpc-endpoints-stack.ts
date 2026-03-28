@@ -39,8 +39,11 @@ import {
   VpcEndpoint,
   VpcEndpointType,
 } from '@aws-accelerator/constructs';
-import { getAvailabilityZoneMap } from '@aws-accelerator/utils/lib/regions';
-import { SsmResourceType } from '@aws-accelerator/utils/lib/ssm-parameter-path';
+import { getAvailabilityZoneMap, SsmResourceType } from '@aws-accelerator/utils';
+
+import { VpcReferences } from '../../../resources/references/vpc-references';
+import { SubnetReferences } from '../../../resources/references/subnet-references';
+import { RouteTableReferences } from '../../../resources/references/route-table-references';
 
 import { AcceleratorStackProps } from '../../accelerator-stack';
 import { NetworkStack } from '../network-stack';
@@ -50,20 +53,22 @@ import { setIpamSubnetRouteTableEntryArray } from '../utils/setter-utils';
 export class NetworkVpcEndpointsStack extends NetworkStack {
   private nfwPolicyMap: Map<string, string>;
 
-  private vpcMap: Map<string, string>;
-  private subnetMap: Map<string, string>;
-  private routeTableMap: Map<string, string>;
+  private vpcMap: VpcReferences;
+  private subnetMap: SubnetReferences;
+  private routeTableMap: RouteTableReferences;
   private firewallMap: Map<string, INetworkFirewall>;
   private securityGroupEndpointMap: Map<string, SecurityGroup>;
+  ssmPrefix: string;
 
   constructor(scope: Construct, id: string, props: AcceleratorStackProps) {
     super(scope, id, props);
     //
     // Store VPC, subnet, and route table IDs
     //
-    this.vpcMap = this.setVpcMap(this.vpcsInScope);
-    this.subnetMap = this.setSubnetMap(this.vpcsInScope);
-    this.routeTableMap = this.setRouteTableMap(this.vpcsInScope);
+    this.ssmPrefix = this.props.prefixes.ssmParamName;
+    this.vpcMap = new VpcReferences(this, this.ssmPrefix, this.vpcsInScope);
+    this.subnetMap = new SubnetReferences(this, this.ssmPrefix, this.vpcsInScope);
+    this.routeTableMap = new RouteTableReferences(this, this.ssmPrefix, this.vpcsInScope);
     this.securityGroupEndpointMap = this.setEndpointSecurityGroupMap(this.vpcsInScope);
     this.firewallMap = new Map<string, NetworkFirewall>();
 
@@ -78,18 +83,15 @@ export class NetworkVpcEndpointsStack extends NetworkStack {
     // Iterate through VPCs in this account and region
     //
     for (const vpcItem of this.vpcsInScope) {
-      // Get Vpc Id
-      const vpcId = this.getVpcId(vpcItem.name);
-
       //
       // Create VPC endpoints
       //
-      this.createVpcEndpoints(vpcItem, vpcId);
+      this.createVpcEndpoints(vpcItem);
 
       //
       // Create Network Firewalls
       //
-      this.createNetworkFirewalls(vpcItem, vpcId, firewallLogBucket, props);
+      this.createNetworkFirewalls(vpcItem, firewallLogBucket, props);
 
       //
       // Create endpoint routes
@@ -99,7 +101,7 @@ export class NetworkVpcEndpointsStack extends NetworkStack {
       //
       // Create Route 53 Resolver Endpoints
       //
-      this.createRoute53ResolverEndpoints(vpcItem, vpcId, props);
+      this.createRoute53ResolverEndpoints(vpcItem, props);
     }
 
     //
@@ -121,7 +123,7 @@ export class NetworkVpcEndpointsStack extends NetworkStack {
    * @returns
    */
   private getVpcId(vpcName: string): string {
-    const vpcId = this.vpcMap.get(vpcName);
+    const vpcId = this.vpcMap.getCfnSSMParameter(vpcName);
     if (!vpcId) {
       this.logger.error(`Unable to locate VPC ${vpcName}`);
       throw new Error(`Configuration validation failed at runtime.`);
@@ -138,15 +140,15 @@ export class NetworkVpcEndpointsStack extends NetworkStack {
    * @remarks
    * Function creates Gateway and Interface endpoints for the given VPC.
    */
-  private createVpcEndpoints(vpcItem: VpcConfig | VpcTemplatesConfig, vpcId: string) {
+  private createVpcEndpoints(vpcItem: VpcConfig | VpcTemplatesConfig) {
     // Create VPC endpoints
     //
     if (vpcItem.gatewayEndpoints) {
-      this.createGatewayEndpoints(vpcItem, vpcId);
+      this.createGatewayEndpoints(vpcItem);
     }
 
     if (vpcItem.interfaceEndpoints) {
-      this.createInterfaceEndpoints(vpcItem, vpcId);
+      this.createInterfaceEndpoints(vpcItem);
     }
   }
 
@@ -160,8 +162,7 @@ export class NetworkVpcEndpointsStack extends NetworkStack {
 
     // Check if VPC has matching subnets
     for (const subnetItem of firewallItem.subnets) {
-      const subnetKey = `${firewallItem.vpc}_${subnetItem}`;
-      const subnetId = this.subnetMap.get(subnetKey);
+      const subnetId = this.subnetMap.getCfnSSMParameter(firewallItem.vpc, subnetItem);
       if (subnetId) {
         firewallSubnets.push(subnetId);
       } else {
@@ -182,7 +183,6 @@ export class NetworkVpcEndpointsStack extends NetworkStack {
    */
   private createNetworkFirewalls(
     vpcItem: VpcConfig | VpcTemplatesConfig,
-    vpcId: string,
     firewallLogBucket: cdk.aws_s3.IBucket,
     props: AcceleratorStackProps,
   ) {
@@ -196,6 +196,7 @@ export class NetworkVpcEndpointsStack extends NetworkStack {
 
           // Create firewall
           if (firewallSubnetIds.length > 0) {
+            const vpcId = this.getVpcId(vpcItem.name);
             const nfw = this.createNetworkFirewall(firewallItem, vpcId, firewallSubnetIds, firewallLogBucket);
             this.firewallMap.set(firewallItem.name, nfw);
           }
@@ -215,7 +216,7 @@ export class NetworkVpcEndpointsStack extends NetworkStack {
       pascalCase(routeTableEntryItem.name);
 
     if (routeTableEntryItem.type && routeTableEntryItem.type === 'networkFirewall') {
-      const routeTableId = this.routeTableMap.get(`${vpcName}_${routeTableItem.name}`);
+      const routeTableId = this.routeTableMap.getCfnSSMParameter(vpcName, routeTableItem.name);
       const [destination, ipv6Destination] = this.setRouteEntryDestination(
         routeTableEntryItem,
         setIpamSubnetRouteTableEntryArray(this.vpcsInScope),
@@ -298,8 +299,7 @@ export class NetworkVpcEndpointsStack extends NetworkStack {
     endpointSubnets: string[],
   ) {
     for (const subnetItem of endpointItem.subnets) {
-      const subnetKey = `${vpcItem.name}_${subnetItem}`;
-      const subnetId = this.subnetMap.get(subnetKey);
+      const subnetId = this.subnetMap.getCfnSSMParameter(vpcItem.name, subnetItem);
       if (subnetId) {
         endpointSubnets.push(subnetId);
       } else {
@@ -315,11 +315,7 @@ export class NetworkVpcEndpointsStack extends NetworkStack {
    * @param vpcId string
    * @param props {@link AcceleratorStackProps}
    */
-  private createRoute53ResolverEndpoints(
-    vpcItem: VpcConfig | VpcTemplatesConfig,
-    vpcId: string,
-    props: AcceleratorStackProps,
-  ) {
+  private createRoute53ResolverEndpoints(vpcItem: VpcConfig | VpcTemplatesConfig, props: AcceleratorStackProps) {
     if (props.networkConfig.centralNetworkServices?.route53Resolver?.endpoints) {
       const endpoints = props.networkConfig.centralNetworkServices?.route53Resolver?.endpoints;
 
@@ -338,6 +334,7 @@ export class NetworkVpcEndpointsStack extends NetworkStack {
 
           // Create endpoint
           if (endpointSubnets.length > 0) {
+            const vpcId = this.getVpcId(vpcItem.name);
             this.createResolverEndpoint(endpointItem, vpcId, endpointSubnets);
           }
         }
@@ -354,10 +351,10 @@ export class NetworkVpcEndpointsStack extends NetworkStack {
     for (const vpcItem of props.networkConfig.vpcs ?? []) {
       const accountId = this.props.accountsConfig.getAccountId(vpcItem.account);
       if (cdk.Stack.of(this).region === vpcItem.region && cdk.Stack.of(this).account === accountId) {
-        // Get Vpc Id
-        const vpcId = this.getVpcId(vpcItem.name);
         if (vpcItem.vpcRoute53Resolver?.endpoints) {
           {
+            // Get Vpc Id
+            const vpcId = this.getVpcId(vpcItem.name);
             const endpoints = vpcItem.vpcRoute53Resolver.endpoints;
             for (const endpointItem of endpoints) {
               if (this.isManagedByAsea(AseaResourceType.ROUTE_53_RESOLVER_ENDPOINT, `${endpointItem.name}`)) {
@@ -444,6 +441,7 @@ export class NetworkVpcEndpointsStack extends NetworkStack {
         const logGroup = new cdk.aws_logs.LogGroup(this, pascalCase(`${firewallItem.name}${logItem.type}LogGroup`), {
           encryptionKey: this.cloudwatchKey,
           retention: this.logRetention,
+          removalPolicy: cdk.RemovalPolicy.RETAIN_ON_UPDATE_OR_DELETE,
         });
         destinationConfigs.push({
           logDestination: {
@@ -486,8 +484,7 @@ export class NetworkVpcEndpointsStack extends NetworkStack {
    * @returns
    */
   private getRouteTableId(vpcName: string, routeTableName: string): string {
-    const routeTableKey = `${vpcName}_${routeTableName}`;
-    const routeTableId = this.routeTableMap.get(routeTableKey);
+    const routeTableId = this.routeTableMap.getCfnSSMParameter(vpcName, routeTableName);
 
     if (!routeTableId) {
       this.logger.error(`Route Table ${routeTableName} not found`);
@@ -504,11 +501,15 @@ export class NetworkVpcEndpointsStack extends NetworkStack {
    */
   private getS3DynamoDbRouteTableIds(
     routeTableItem: RouteTableConfig,
-    routeTableId: string,
+    vpcName: string,
     s3EndpointRouteTables: string[],
     dynamodbEndpointRouteTables: string[],
   ) {
     for (const routeTableEntryItem of routeTableItem.routes ?? []) {
+      if (!routeTableEntryItem.target || !['s3', 'dynamodb'].includes(routeTableEntryItem.target)) {
+        continue;
+      }
+      const routeTableId = this.getRouteTableId(vpcName, routeTableItem.name);
       // Route: S3 Gateway Endpoint
       if (routeTableEntryItem.target === 's3') {
         if (!s3EndpointRouteTables.find(item => item === routeTableId)) {
@@ -531,14 +532,12 @@ export class NetworkVpcEndpointsStack extends NetworkStack {
    * @param vpcItem
    * @param vpc
    */
-  private createGatewayEndpoints(vpcItem: VpcConfig | VpcTemplatesConfig, vpcId: string): void {
+  private createGatewayEndpoints(vpcItem: VpcConfig | VpcTemplatesConfig): void {
     // Create a list of related route tables that will need to be updated with the gateway routes
     const s3EndpointRouteTables: string[] = [];
     const dynamodbEndpointRouteTables: string[] = [];
     for (const routeTableItem of vpcItem.routeTables ?? []) {
-      const routeTableId = this.getRouteTableId(vpcItem.name, routeTableItem.name);
-
-      this.getS3DynamoDbRouteTableIds(routeTableItem, routeTableId, s3EndpointRouteTables, dynamodbEndpointRouteTables);
+      this.getS3DynamoDbRouteTableIds(routeTableItem, vpcItem.name, s3EndpointRouteTables, dynamodbEndpointRouteTables);
     }
 
     //
@@ -550,6 +549,7 @@ export class NetworkVpcEndpointsStack extends NetworkStack {
         this.logger.info(`Endpoint "${gatewayEndpointItem.service}" for VPC "${vpcItem.name}" is managed externally`);
         continue;
       }
+      const vpcId = this.getVpcId(vpcItem.name);
       if (gatewayEndpointItem.service === 's3') {
         new VpcEndpoint(this, pascalCase(`${vpcItem.name}Vpc`) + pascalCase(gatewayEndpointItem.service), {
           vpcId,
@@ -582,8 +582,7 @@ export class NetworkVpcEndpointsStack extends NetworkStack {
     // Create list of subnet IDs for each interface endpoint
     const subnets: string[] = [];
     for (const subnetItem of vpcItem.interfaceEndpoints?.subnets ?? []) {
-      const subnetKey = `${vpcItem.name}_${subnetItem}`;
-      const subnet = this.subnetMap.get(subnetKey);
+      const subnet = this.subnetMap.getCfnSSMParameter(vpcItem.name, subnetItem);
       if (subnet) {
         subnets.push(subnet);
       } else {
@@ -717,7 +716,7 @@ export class NetworkVpcEndpointsStack extends NetworkStack {
    * @param vpcItem {@link VpcConfig} | {@link VpcTemplatesConfig}
    * @param vpcId string
    */
-  private createInterfaceEndpoints(vpcItem: VpcConfig | VpcTemplatesConfig, vpcId: string): void {
+  private createInterfaceEndpoints(vpcItem: VpcConfig | VpcTemplatesConfig): void {
     //
     // Add Interface Endpoints (AWS Services)
     //
@@ -726,7 +725,7 @@ export class NetworkVpcEndpointsStack extends NetworkStack {
 
     // Create the interface endpoint
     const securityGroupMap = new Map<string, SecurityGroup>();
-    const privateDnsValue = vpcItem.interfaceEndpoints?.central === false;
+    const privateDnsValue = !vpcItem.interfaceEndpoints?.central ? true : false;
 
     for (const endpointItem of vpcItem.interfaceEndpoints?.endpoints ?? []) {
       const globalRegion = getGlobalRegion(cdk.Stack.of(this).partition);
@@ -744,6 +743,7 @@ export class NetworkVpcEndpointsStack extends NetworkStack {
       this.logger.info(`Adding Interface Endpoint for ${endpointItem.service}`);
 
       // Create or get interface endpoint security group
+      const vpcId = this.getVpcId(vpcItem.name);
       const endpointSg = this.createOrGetInterfaceEndpointSecurityGroup(vpcItem, endpointItem, securityGroupMap, vpcId);
 
       // Create the interface endpoint

@@ -1,10 +1,9 @@
 import { ImportAseaResourcesStack, LogLevel } from '../stacks/import-asea-resources-stack';
 import { AseaResource, AseaResourceProps } from './resource';
 import { pascalCase } from 'pascal-case';
-import { SsmResourceType } from '@aws-accelerator/utils/lib/ssm-parameter-path';
+import { SsmResourceType, getAseaConfigVpcName } from '@aws-accelerator/utils';
 import { ASEAMappings, AseaResourceType, NestedStack } from '@aws-accelerator/config';
 import { CfnHostedZone } from 'aws-cdk-lib/aws-route53';
-import { getAseaConfigVpcName } from '@aws-accelerator/utils';
 const ASEA_PHASE_NUMBER = '2';
 const enum RESOURCE_TYPE {
   VPC_ENDPOINT_TYPE = 'AWS::EC2::VPCEndpoint',
@@ -120,6 +119,39 @@ export class VpcEndpoints extends AseaResource {
           );
           if (!hostedZoneCfn) {
             continue;
+          }
+
+          // remove output for R53 hosted zone FIRST (before deleting the hosted zone it references)
+          const outputPrefix = `HostedZoneOutput${pascalCase(vpcItem.name)}${pascalCase(configEndpointName)}Output`;
+          const backupVpcName = vpcItem.name.split('_vpc')[0];
+          const backupOutputPrefix = `HostedZoneOutput${pascalCase(backupVpcName)}${pascalCase(configEndpointName)}Output`;
+
+          // Find the output by searching through stack children for matching prefix
+          let outputFound = false;
+          for (const child of this.scope.includedStack.node.children) {
+            if (child.node.id.startsWith(outputPrefix)) {
+              this.scope.includedStack.node.tryRemoveChild(child.node.id);
+              this.scope.addLogs(
+                LogLevel.INFO,
+                `Removed output ${child.node.id} for endpoint ${vpcItem.name}/${configEndpointName}`,
+              );
+              outputFound = true;
+              break;
+            }
+          }
+
+          // If not found, try with backup prefix (vpc name without "_vpc" suffix)
+          if (!outputFound) {
+            for (const child of this.scope.includedStack.node.children) {
+              if (child.node.id.startsWith(backupOutputPrefix)) {
+                this.scope.includedStack.node.tryRemoveChild(child.node.id);
+                this.scope.addLogs(
+                  LogLevel.INFO,
+                  `Removed output ${child.node.id} for endpoint ${vpcItem.name}/${configEndpointName} (using backup prefix)`,
+                );
+                break;
+              }
+            }
           }
 
           // route53 hosted zone

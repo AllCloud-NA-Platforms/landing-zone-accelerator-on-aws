@@ -11,10 +11,9 @@
  *  and limitations under the License.
  */
 
-import { createLogger } from '@aws-accelerator/utils/lib/logger';
+import { createLogger } from '@aws-accelerator/utils';
 import fs from 'fs';
 import path from 'path';
-import * as t from '../lib/common';
 import { AccountsConfig } from '../lib/accounts-config';
 import { DeploymentTargets } from '../lib/common';
 import {
@@ -127,6 +126,8 @@ export class SecurityConfigValidator {
     // Validate expiration for Macie and GuardDuty Lifecycle Rules
     this.macieLifecycleRules(securityConfig, errors);
     this.guarddutyLifecycleRules(securityConfig, errors);
+    // Validate IAM password policy
+    this.validateIamPasswordPolicy(securityConfig, errors);
     // Validate Config rule assets
     for (const ruleSet of securityConfig.awsConfig.ruleSets ?? []) {
       this.validateConfigRuleAssets(configDir, ruleSet, errors);
@@ -157,6 +158,9 @@ export class SecurityConfigValidator {
     this.validateResourcePolicyParameters(configDir, securityConfig, replacementsConfig, errors);
 
     this.validateConfigRuleCmkDependency(securityConfig, globalConfig, accountsConfig, errors);
+
+    // Validate SecurityHub automation rules
+    this.validateSecurityHubAutomationRules(securityConfig, globalConfig, errors);
 
     if (errors.length) {
       throw new Error(`${SecurityConfig.FILENAME} has ${errors.length} issues:\n${errors.join('\n')}`);
@@ -531,7 +535,7 @@ export class SecurityConfigValidator {
       globalConfig,
     );
     let configRuleSetAccounts: string[] = [];
-    let configRuleSetRegions: t.Region[] = [];
+    let configRuleSetRegions: string[] = [];
 
     for (const ruleSet of values.awsConfig.ruleSets ?? []) {
       configRuleSetAccounts.push(
@@ -595,7 +599,7 @@ export class SecurityConfigValidator {
       globalConfig,
     );
     let securityHubStandardAccounts: string[] = [];
-    let securityHubStandardRegions: t.Region[] = [];
+    let securityHubStandardRegions: string[] = [];
 
     for (const securityHubStandard of securityHubStandards ?? []) {
       if (securityHubStandard.deploymentTargets) {
@@ -1498,5 +1502,58 @@ export class SecurityConfigValidator {
     }
 
     return undefined;
+  }
+
+  /**
+   * Validate IAM password policy configuration
+   * @param securityConfig SecurityConfig
+   * @param errors string[]
+   */
+  private validateIamPasswordPolicy(securityConfig: SecurityConfig, errors: string[]) {
+    if (securityConfig.iamPasswordPolicy) {
+      const maxPasswordAge = securityConfig.iamPasswordPolicy.maxPasswordAge;
+      if (maxPasswordAge < 1 || maxPasswordAge > 1095) {
+        errors.push(
+          `IAM password policy maxPasswordAge must be between 1 and 1095 days. Current value: ${maxPasswordAge}`,
+        );
+      }
+    }
+  }
+
+  /**
+   * Validate SecurityHub automation rules configuration
+   * @param securityConfig SecurityConfig
+   * @param globalConfig GlobalConfig
+   * @param errors string[]
+   */
+  private validateSecurityHubAutomationRules(
+    securityConfig: SecurityConfig,
+    globalConfig: GlobalConfig,
+    errors: string[],
+  ) {
+    const automationRules = securityConfig.centralSecurityServices.securityHub.automationRules;
+    if (!automationRules || automationRules.length === 0) return;
+
+    const enabledRegions = globalConfig.enabledRegions;
+
+    // Validate rule names are unique
+    const ruleNames = automationRules.map(rule => rule.name);
+
+    if (this.hasDuplicates(ruleNames)) {
+      errors.push(`Duplicate SecurityHub automation rule names exist. Rule names must be unique.`);
+    }
+
+    // Validate excludeRegions are in enabledRegions
+    const regionErrors = automationRules.flatMap(
+      rule =>
+        rule.excludeRegions
+          ?.filter(excludeRegion => !enabledRegions.includes(excludeRegion))
+          .map(
+            excludeRegion =>
+              `SecurityHub automation rule "${rule.name}" excludeRegion "${excludeRegion}" is not in the list of enabled regions.`,
+          ) ?? [],
+    );
+
+    regionErrors.forEach(error => errors.push(error));
   }
 }

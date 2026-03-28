@@ -14,7 +14,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { v4 as uuidv4 } from 'uuid';
 import { Construct } from 'constructs';
-import path = require('path');
+import * as path from 'path';
 import { NagSuppressions } from 'cdk-nag';
 import { DEFAULT_LAMBDA_RUNTIME } from '../../utils/lib/lambda';
 import { AcceleratorResourcePrefixes } from '../utils/app-utils';
@@ -22,16 +22,12 @@ import { AcceleratorResourcePrefixes } from '../utils/app-utils';
 export interface ValidateEnvironmentConfigProps {
   readonly acceleratorConfigTable: cdk.aws_dynamodb.ITable;
   readonly newOrgAccountsTable: cdk.aws_dynamodb.ITable;
-  readonly newCTAccountsTable: cdk.aws_dynamodb.ITable;
-  readonly controlTowerEnabled: boolean;
   readonly organizationsEnabled: boolean;
   readonly commitId: string;
   readonly stackName: string;
   readonly region: string;
   readonly managementAccountId: string;
   readonly partition: string;
-  readonly driftDetectionParameter: cdk.aws_ssm.IParameter;
-  readonly driftDetectionMessageParameter: cdk.aws_ssm.IParameter;
   readonly serviceControlPolicies: {
     name: string;
     targetType: 'ou' | 'account';
@@ -48,6 +44,7 @@ export interface ValidateEnvironmentConfigProps {
   readonly logRetentionInDays: number;
   readonly prefixes: AcceleratorResourcePrefixes;
   readonly vpcsCidrs: { vpcName: string; logicalId: string; cidrs: string[]; parameterName: string }[];
+  readonly transitGateways: { transitGatewayName: string; logicalId: string; multicastSupport: string | undefined }[];
   readonly useV2StacksValue: boolean;
   readonly v2StacksParamName: string;
 }
@@ -85,7 +82,7 @@ export class ValidateEnvironmentConfig extends Construct {
       sid: 'dynamodb',
       effect: cdk.aws_iam.Effect.ALLOW,
       actions: ['dynamodb:PutItem'],
-      resources: [props.newOrgAccountsTable.tableArn, props.newCTAccountsTable?.tableArn],
+      resources: [props.newOrgAccountsTable.tableArn],
     });
     const ddbConfigTablePolicy = new cdk.aws_iam.PolicyStatement({
       sid: 'dynamodbConfigTable',
@@ -97,7 +94,7 @@ export class ValidateEnvironmentConfig extends Construct {
       sid: 'kms',
       effect: cdk.aws_iam.Effect.ALLOW,
       actions: ['kms:Encrypt', 'kms:Decrypt', 'kms:GenerateDataKey*', 'kms:DescribeKey'],
-      resources: [props.newOrgAccountsTable.encryptionKey!.keyArn, props.newCTAccountsTable.encryptionKey!.keyArn],
+      resources: [props.newOrgAccountsTable.encryptionKey!.keyArn],
     });
     const cloudformationPolicy = new cdk.aws_iam.PolicyStatement({
       sid: 'cloudformation',
@@ -112,10 +109,9 @@ export class ValidateEnvironmentConfig extends Construct {
       effect: cdk.aws_iam.Effect.ALLOW,
       actions: ['ssm:GetParameter'],
       resources: [
-        props.driftDetectionParameter.parameterArn,
-        props.driftDetectionMessageParameter.parameterArn,
         `arn:${props.partition}:ssm:${props.region}:${props.managementAccountId}:parameter${props.prefixes.ssmParamName}/validation/*/network/vpc/*/deployedCidrs`,
         `arn:${props.partition}:ssm:${props.region}:${props.managementAccountId}:parameter${props.v2StacksParamName}`,
+        `arn:${props.partition}:ssm:${props.region}:${props.managementAccountId}:parameter${props.prefixes.ssmParamName}/validation/*/network/tgw/*/multicastSupport`,
       ],
     });
     const ssmCreateParamPolicy = new cdk.aws_iam.PolicyStatement({
@@ -124,6 +120,7 @@ export class ValidateEnvironmentConfig extends Construct {
       actions: ['ssm:PutParameter'],
       resources: [
         `arn:${props.partition}:ssm:${props.region}:${props.managementAccountId}:parameter${props.v2StacksParamName}`,
+        `arn:${props.partition}:ssm:${props.region}:${props.managementAccountId}:parameter${props.prefixes.ssmParamName}/validation/*/network/tgw/*/multicastSupport`,
       ],
     });
 
@@ -161,14 +158,10 @@ export class ValidateEnvironmentConfig extends Construct {
       properties: {
         configTableName: props.acceleratorConfigTable.tableName,
         newOrgAccountsTableName: props.newOrgAccountsTable.tableName,
-        newCTAccountsTableName: props.newCTAccountsTable?.tableName || '',
-        controlTowerEnabled: props.controlTowerEnabled,
         organizationsEnabled: props.organizationsEnabled,
         commitId: props.commitId,
         stackName: props.stackName,
         partition: props.partition,
-        driftDetectionParameterName: props.driftDetectionParameter.parameterName,
-        driftDetectionMessageParameterName: props.driftDetectionMessageParameter.parameterName,
         serviceControlPolicies: props.serviceControlPolicies,
         skipScpValidation: process.env['ACCELERATOR_SKIP_SCP_VALIDATION'] ?? 'no',
         maxOuAttachedScps: process.env['ACCELERATOR_MAX_OU_ATTACHED_SCPS'] ?? 5,
@@ -176,6 +169,7 @@ export class ValidateEnvironmentConfig extends Construct {
         policyTagKey: props.policyTagKey,
         uuid: uuidv4(), // Generates a new UUID to force the resource to update,
         vpcCidrs: props.vpcsCidrs,
+        transitGateways: props.transitGateways,
         useV2StacksValue: props.useV2StacksValue,
         v2StacksParamName: props.v2StacksParamName,
       },

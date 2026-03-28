@@ -17,7 +17,9 @@ import {
   getOrganizationalUnitsDetail,
   IRegisterOrganizationalUnitHandlerParameter,
   registerOrganizationalUnit,
+  getParametersValue,
 } from '../../../../../@aws-lza/index';
+import { SSMClient, PutParameterCommand } from '@aws-sdk/client-ssm';
 import { ModuleParams } from '../../../models/types';
 
 const statusLogger = createStatusLogger([path.parse(path.basename(__filename)).name]);
@@ -37,6 +39,36 @@ export abstract class RegisterOrganizationalUnitModule {
     }
 
     statusLogger.info(`Executing "${params.moduleItem.name}" module.`);
+
+    // Get SSM parameter to check if governed regions were updated
+    const governRegionsUpdatedParamName =
+      params.moduleRunnerParameters.resourcePrefixes.ssmParamName + '/control-tower/govern-regions-updated';
+
+    let reregisterOu = false;
+    try {
+      const ssmParameters = await getParametersValue(
+        [governRegionsUpdatedParamName],
+        params.moduleRunnerParameters.configs.globalConfig.homeRegion,
+        'RegisterOrganizationalUnitModule',
+        undefined,
+        params.runnerParameters.solutionId,
+        params.moduleRunnerParameters.managementAccountCredentials,
+        { [governRegionsUpdatedParamName]: 'false' }, // Default when parameter doesn't exist yet — expected on first run
+      );
+
+      const governRegionsUpdatedParam = ssmParameters.find(p => p.Name === governRegionsUpdatedParamName);
+      if (governRegionsUpdatedParam?.Value === 'true') {
+        statusLogger.info('Governed regions were updated, will re-register organizational units.');
+        reregisterOu = true;
+      } else {
+        statusLogger.info('No governed regions update detected, skipping OU re-registration.');
+      }
+    } catch (error) {
+      statusLogger.warn(
+        `Failed to read SSM parameter ${governRegionsUpdatedParamName}. Defaulting reregisterOu to false. This is a non-critical error and will not affect core functionality. Error: ${error}`,
+      );
+    }
+
     const securityOuName =
       params.moduleRunnerParameters.configs.accountsConfig.getLogArchiveAccount().organizationalUnit;
 
@@ -58,9 +90,10 @@ export abstract class RegisterOrganizationalUnitModule {
       params.moduleRunnerParameters.configs.organizationConfig.organizationalUnits.filter(
         item =>
           item.name !== securityOuName &&
-          organizationalUnitsDetail.some(
+          (organizationalUnitsDetail.some(
             ouDetail => ouDetail.completePath === item.name && !ouDetail.registeredwithControlTower,
-          ),
+          ) ||
+            reregisterOu),
       );
 
     // Sort organizational units by hierarchy depth
@@ -94,10 +127,31 @@ export abstract class RegisterOrganizationalUnitModule {
         dryRun: params.runnerParameters.dryRun,
         configuration: {
           name: organizationalUnit.name,
+          reregisterOu: reregisterOu,
         },
       };
       statusLogger.info(`Executing "${params.moduleItem.name}" module for ${organizationalUnit.name} OU.`);
       statuses.push(await registerOrganizationalUnit(param));
+    }
+
+    // Reset the SSM parameter to false after processing all OUs
+    if (reregisterOu) {
+      const ssmClient = new SSMClient({
+        region: params.moduleRunnerParameters.configs.globalConfig.homeRegion,
+        customUserAgent: params.runnerParameters.solutionId,
+        credentials: params.moduleRunnerParameters.managementAccountCredentials,
+      });
+
+      await ssmClient.send(
+        new PutParameterCommand({
+          Name: governRegionsUpdatedParamName,
+          Value: 'false',
+          Type: 'String',
+          Description: 'Indicates that Control Tower governed regions have been updated',
+          Overwrite: true,
+        }),
+      );
+      statusLogger.info(`Reset SSM parameter ${governRegionsUpdatedParamName} to false after re-registering OUs.`);
     }
 
     return `Module "${params.moduleItem.name}" completed successfully with status ${statuses.join('\n')}`;

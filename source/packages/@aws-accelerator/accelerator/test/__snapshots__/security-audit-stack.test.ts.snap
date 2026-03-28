@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`SecurityAuditStack Construct(SecurityAuditStack):  Snapshot Test 1`] = `
+exports[`SecurityAuditStack > Construct(SecurityAuditStack):  Snapshot Test 1`] = `
 {
   "Parameters": {
     "SsmParameterValueacceleratorkmscloudwatchkeyarnC96584B6F00A464EAD1953AFF4B05118Parameter": {
@@ -60,9 +60,9 @@ exports[`SecurityAuditStack Construct(SecurityAuditStack):  Snapshot Test 1`] = 
       "Type": "AWS::KMS::Alias",
     },
     "AcceleratorSnsKeyDADF94B1": {
-      "DeletionPolicy": "Retain",
+      "DeletionPolicy": "RetainExceptOnCreate",
       "Properties": {
-        "Description": "AWS Accelerator SNS Kms Key",
+        "Description": "KMS key for encrypting SNS topics in security audit account",
         "EnableKeyRotation": true,
         "KeyPolicy": {
           "Statement": [
@@ -120,6 +120,44 @@ exports[`SecurityAuditStack Construct(SecurityAuditStack):  Snapshot Test 1`] = 
               },
               "Resource": "*",
               "Sid": "Allow Accelerator Role to use the encryption key",
+            },
+            {
+              "Action": [
+                "kms:Decrypt",
+                "kms:GenerateDataKey*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudwatch.amazonaws.com",
+              },
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "kms:Decrypt",
+                "kms:GenerateDataKey*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "kms:Decrypt",
+                "kms:GenerateDataKey*",
+              ],
+              "Condition": {
+                "StringEquals": {
+                  "aws:PrincipalOrgID": "o-asdf123456",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": "*",
             },
           ],
           "Version": "2012-10-17",
@@ -690,203 +728,6 @@ def script_handler(events, context):
       },
       "Type": "AWS::S3::BucketPolicy",
     },
-    "ControlTowerNotificationsForwarderFunctionAllowInvokeAWSAcceleratorSecurityAuditStack222222222222useast1ControlTowerSNSTopic2C923A0CF50B8C0E": {
-      "Properties": {
-        "Action": "lambda:InvokeFunction",
-        "FunctionName": {
-          "Fn::GetAtt": [
-            "ControlTowerNotificationsForwarderFunctionFA79B131",
-            "Arn",
-          ],
-        },
-        "Principal": "sns.amazonaws.com",
-        "SourceArn": {
-          "Fn::Join": [
-            "",
-            [
-              "arn:",
-              {
-                "Ref": "AWS::Partition",
-              },
-              ":sns:us-east-1:222222222222:aws-controltower-AggregateSecurityNotifications",
-            ],
-          ],
-        },
-      },
-      "Type": "AWS::Lambda::Permission",
-    },
-    "ControlTowerNotificationsForwarderFunctionControlTowerSNSTopicF1309D6C": {
-      "Properties": {
-        "Endpoint": {
-          "Fn::GetAtt": [
-            "ControlTowerNotificationsForwarderFunctionFA79B131",
-            "Arn",
-          ],
-        },
-        "Protocol": "lambda",
-        "Region": "us-east-1",
-        "TopicArn": {
-          "Fn::Join": [
-            "",
-            [
-              "arn:",
-              {
-                "Ref": "AWS::Partition",
-              },
-              ":sns:us-east-1:222222222222:aws-controltower-AggregateSecurityNotifications",
-            ],
-          ],
-        },
-      },
-      "Type": "AWS::SNS::Subscription",
-    },
-    "ControlTowerNotificationsForwarderFunctionFA79B131": {
-      "DependsOn": [
-        "ControlTowerNotificationsForwarderFunctionServiceRoleDefaultPolicyEBACE9AF",
-        "ControlTowerNotificationsForwarderFunctionServiceRoleE83D121D",
-      ],
-      "Properties": {
-        "Code": {
-          "S3Bucket": "cdk-hnb659fds-assets-222222222222-us-east-1",
-          "S3Key": "REPLACED-GENERATED-NAME.zip",
-        },
-        "Description": "Lambda function to forward ControlTower notifications to management account",
-        "Environment": {
-          "Variables": {
-            "SNS_TOPIC_ARN": {
-              "Fn::Join": [
-                "",
-                [
-                  "arn:",
-                  {
-                    "Ref": "AWS::Partition",
-                  },
-                  ":sns:us-east-1:111111111111:AWSAccelerator-ControlTowerNotification",
-                ],
-              ],
-            },
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
-          },
-        },
-        "Handler": "index.handler",
-        "MemorySize": 512,
-        "Role": {
-          "Fn::GetAtt": [
-            "ControlTowerNotificationsForwarderFunctionServiceRoleE83D121D",
-            "Arn",
-          ],
-        },
-        "Runtime": "nodejs20.x",
-        "Timeout": 120,
-      },
-      "Type": "AWS::Lambda::Function",
-    },
-    "ControlTowerNotificationsForwarderFunctionServiceRoleDefaultPolicyEBACE9AF": {
-      "Metadata": {
-        "cdk_nag": {
-          "rules_to_suppress": [
-            {
-              "id": "AwsSolutions-IAM5",
-              "reason": "Require access to all keys in management account",
-            },
-          ],
-        },
-      },
-      "Properties": {
-        "PolicyDocument": {
-          "Statement": [
-            {
-              "Action": "sns:Publish",
-              "Effect": "Allow",
-              "Resource": {
-                "Fn::Join": [
-                  "",
-                  [
-                    "arn:",
-                    {
-                      "Ref": "AWS::Partition",
-                    },
-                    ":sns:us-east-1:111111111111:AWSAccelerator-ControlTowerNotification",
-                  ],
-                ],
-              },
-              "Sid": "sns",
-            },
-            {
-              "Action": [
-                "kms:DescribeKey",
-                "kms:GenerateDataKey",
-                "kms:Decrypt",
-                "kms:Encrypt",
-              ],
-              "Effect": "Allow",
-              "Resource": {
-                "Fn::Join": [
-                  "",
-                  [
-                    "arn:",
-                    {
-                      "Ref": "AWS::Partition",
-                    },
-                    ":kms:us-east-1:111111111111:key/*",
-                  ],
-                ],
-              },
-              "Sid": "kms",
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "PolicyName": "ControlTowerNotificationsForwarderFunctionServiceRoleDefaultPolicyEBACE9AF",
-        "Roles": [
-          {
-            "Ref": "ControlTowerNotificationsForwarderFunctionServiceRoleE83D121D",
-          },
-        ],
-      },
-      "Type": "AWS::IAM::Policy",
-    },
-    "ControlTowerNotificationsForwarderFunctionServiceRoleE83D121D": {
-      "Metadata": {
-        "cdk_nag": {
-          "rules_to_suppress": [
-            {
-              "id": "AwsSolutions-IAM4",
-              "reason": "AWS Custom resource provider lambda role created by cdk.",
-            },
-          ],
-        },
-      },
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Statement": [
-            {
-              "Action": "sts:AssumeRole",
-              "Effect": "Allow",
-              "Principal": {
-                "Service": "lambda.amazonaws.com",
-              },
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "ManagedPolicyArns": [
-          {
-            "Fn::Join": [
-              "",
-              [
-                "arn:",
-                {
-                  "Ref": "AWS::Partition",
-                },
-                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-              ],
-            ],
-          },
-        ],
-      },
-      "Type": "AWS::IAM::Role",
-    },
     "CustomAuditManagerCreateDefaultReportsDestinationCustomResourceProviderHandler6BCBC433": {
       "DependsOn": [
         "CustomAuditManagerCreateDefaultReportsDestinationCustomResourceProviderRoleAEE72AE5",
@@ -898,7 +739,7 @@ def script_handler(events, context):
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -909,7 +750,7 @@ def script_handler(events, context):
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -987,7 +828,7 @@ def script_handler(events, context):
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -998,13 +839,13 @@ def script_handler(events, context):
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
     },
     "CustomDetectiveCreateMembersCustomResourceProviderLogGroup8A5563BD": {
-      "DeletionPolicy": "Retain",
+      "DeletionPolicy": "RetainExceptOnCreate",
       "Properties": {
         "KmsKeyId": {
           "Ref": "SsmParameterValueacceleratorkmscloudwatchkeyarnC96584B6F00A464EAD1953AFF4B05118Parameter",
@@ -1102,7 +943,7 @@ def script_handler(events, context):
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -1113,13 +954,13 @@ def script_handler(events, context):
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
     },
     "CustomDetectiveUpdateGraphCustomResourceProviderLogGroupDF150426": {
-      "DeletionPolicy": "Retain",
+      "DeletionPolicy": "RetainExceptOnCreate",
       "Properties": {
         "KmsKeyId": {
           "Ref": "SsmParameterValueacceleratorkmscloudwatchkeyarnC96584B6F00A464EAD1953AFF4B05118Parameter",
@@ -1240,7 +1081,7 @@ def script_handler(events, context):
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -1251,7 +1092,7 @@ def script_handler(events, context):
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -1318,6 +1159,27 @@ def script_handler(events, context):
                 },
                 {
                   "Action": [
+                    "organizations:DeregisterDelegatedAdministrator",
+                    "organizations:DescribeOrganization",
+                    "organizations:EnableAWSServiceAccess",
+                    "organizations:ListAWSServiceAccessForOrganization",
+                    "organizations:ListAccounts",
+                    "organizations:ListDelegatedAdministrators",
+                    "organizations:RegisterDelegatedAdministrator",
+                  ],
+                  "Condition": {
+                    "StringLikeIfExists": {
+                      "organizations:ServicePrincipal": [
+                        "guardduty.amazonaws.com",
+                      ],
+                    },
+                  },
+                  "Effect": "Allow",
+                  "Resource": "*",
+                  "Sid": "GuardDutyEnableOrganizationAdminAccountTaskOrganizationActions",
+                },
+                {
+                  "Action": [
                     "guardDuty:ListDetectors",
                     "guardDuty:ListOrganizationAdminAccounts",
                     "guardDuty:UpdateOrganizationConfiguration",
@@ -1335,9 +1197,61 @@ def script_handler(events, context):
                   "Action": [
                     "iam:CreateServiceLinkedRole",
                   ],
+                  "Condition": {
+                    "StringEquals": {
+                      "iam:AWSServiceName": [
+                        "guardduty.amazonaws.com",
+                        "malware-protection.guardduty.amazonaws.com",
+                      ],
+                    },
+                  },
                   "Effect": "Allow",
                   "Resource": "*",
-                  "Sid": "ServiceLinkedRoleSecurityHub",
+                  "Sid": "ServiceLinkedRoleGuardDuty",
+                },
+                {
+                  "Action": "iam:GetRole",
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":iam::*:role/*AWSServiceRoleForAmazonGuardDutyMalwareProtection",
+                      ],
+                    ],
+                  },
+                  "Sid": "IamGetRoleSid1",
+                },
+                {
+                  "Action": [
+                    "iam:PassRole",
+                  ],
+                  "Condition": {
+                    "StringEquals": {
+                      "iam:PassedToService": [
+                        "malware-protection-plan.guardduty.amazonaws.com",
+                        "malware-protection.guardduty.amazonaws.com",
+                      ],
+                    },
+                  },
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":iam::*:role/*",
+                      ],
+                    ],
+                  },
+                  "Sid": "AllowPassRoleToMalwareProtection",
                 },
               ],
               "Version": "2012-10-17",
@@ -1359,7 +1273,7 @@ def script_handler(events, context):
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -1370,7 +1284,7 @@ def script_handler(events, context):
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -1452,7 +1366,7 @@ def script_handler(events, context):
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -1463,7 +1377,7 @@ def script_handler(events, context):
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -1563,7 +1477,7 @@ def script_handler(events, context):
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -1574,7 +1488,7 @@ def script_handler(events, context):
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -1655,7 +1569,7 @@ def script_handler(events, context):
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -1666,7 +1580,7 @@ def script_handler(events, context):
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -1756,7 +1670,7 @@ def script_handler(events, context):
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -1767,7 +1681,7 @@ def script_handler(events, context):
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -1865,7 +1779,7 @@ def script_handler(events, context):
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -1876,7 +1790,7 @@ def script_handler(events, context):
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 180,
       },
       "Type": "AWS::Lambda::Function",
@@ -1959,7 +1873,7 @@ def script_handler(events, context):
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -1970,7 +1884,7 @@ def script_handler(events, context):
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -2137,7 +2051,11 @@ def script_handler(events, context):
           ],
         },
         "autoEnableOrgMembers": false,
+        "enableEc2MalwareProtection": false,
+        "enableEksAgent": false,
         "enableEksProtection": true,
+        "enableLambdaProtection": false,
+        "enableRdsProtection": false,
         "enableS3Protection": true,
         "guardDutyMemberAccountIds": [
           "111111111111",
@@ -2767,7 +2685,7 @@ def script_handler(events, context):
       "Properties": {
         "Name": "/accelerator/AWSAccelerator-SecurityAuditStack-222222222222-us-east-1/version",
         "Type": "String",
-        "Value": "1.13.0",
+        "Value": "1.15.0",
       },
       "Type": "AWS::SSM::Parameter",
     },
@@ -2860,7 +2778,7 @@ def script_handler(events, context):
 }
 `;
 
-exports[`delegatedAdminStack Construct(SecurityAuditStack):  Snapshot Test 1`] = `
+exports[`delegatedAdminStack > Construct(SecurityAuditStack):  Snapshot Test 1`] = `
 {
   "Parameters": {
     "SsmParameterValueacceleratorkmscloudwatchkeyarnC96584B6F00A464EAD1953AFF4B05118Parameter": {
@@ -3482,203 +3400,6 @@ def script_handler(events, context):
       },
       "Type": "AWS::S3::BucketPolicy",
     },
-    "ControlTowerNotificationsForwarderFunctionAllowInvokeAWSAcceleratorSecurityAuditStack222222222222useast1ControlTowerSNSTopic2C923A0CF50B8C0E": {
-      "Properties": {
-        "Action": "lambda:InvokeFunction",
-        "FunctionName": {
-          "Fn::GetAtt": [
-            "ControlTowerNotificationsForwarderFunctionFA79B131",
-            "Arn",
-          ],
-        },
-        "Principal": "sns.amazonaws.com",
-        "SourceArn": {
-          "Fn::Join": [
-            "",
-            [
-              "arn:",
-              {
-                "Ref": "AWS::Partition",
-              },
-              ":sns:us-east-1:222222222222:aws-controltower-AggregateSecurityNotifications",
-            ],
-          ],
-        },
-      },
-      "Type": "AWS::Lambda::Permission",
-    },
-    "ControlTowerNotificationsForwarderFunctionControlTowerSNSTopicF1309D6C": {
-      "Properties": {
-        "Endpoint": {
-          "Fn::GetAtt": [
-            "ControlTowerNotificationsForwarderFunctionFA79B131",
-            "Arn",
-          ],
-        },
-        "Protocol": "lambda",
-        "Region": "us-east-1",
-        "TopicArn": {
-          "Fn::Join": [
-            "",
-            [
-              "arn:",
-              {
-                "Ref": "AWS::Partition",
-              },
-              ":sns:us-east-1:222222222222:aws-controltower-AggregateSecurityNotifications",
-            ],
-          ],
-        },
-      },
-      "Type": "AWS::SNS::Subscription",
-    },
-    "ControlTowerNotificationsForwarderFunctionFA79B131": {
-      "DependsOn": [
-        "ControlTowerNotificationsForwarderFunctionServiceRoleDefaultPolicyEBACE9AF",
-        "ControlTowerNotificationsForwarderFunctionServiceRoleE83D121D",
-      ],
-      "Properties": {
-        "Code": {
-          "S3Bucket": "cdk-hnb659fds-assets-222222222222-us-east-1",
-          "S3Key": "REPLACED-GENERATED-NAME.zip",
-        },
-        "Description": "Lambda function to forward ControlTower notifications to management account",
-        "Environment": {
-          "Variables": {
-            "SNS_TOPIC_ARN": {
-              "Fn::Join": [
-                "",
-                [
-                  "arn:",
-                  {
-                    "Ref": "AWS::Partition",
-                  },
-                  ":sns:us-east-1:111111111111:AWSAccelerator-ControlTowerNotification",
-                ],
-              ],
-            },
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
-          },
-        },
-        "Handler": "index.handler",
-        "MemorySize": 512,
-        "Role": {
-          "Fn::GetAtt": [
-            "ControlTowerNotificationsForwarderFunctionServiceRoleE83D121D",
-            "Arn",
-          ],
-        },
-        "Runtime": "nodejs20.x",
-        "Timeout": 120,
-      },
-      "Type": "AWS::Lambda::Function",
-    },
-    "ControlTowerNotificationsForwarderFunctionServiceRoleDefaultPolicyEBACE9AF": {
-      "Metadata": {
-        "cdk_nag": {
-          "rules_to_suppress": [
-            {
-              "id": "AwsSolutions-IAM5",
-              "reason": "Require access to all keys in management account",
-            },
-          ],
-        },
-      },
-      "Properties": {
-        "PolicyDocument": {
-          "Statement": [
-            {
-              "Action": "sns:Publish",
-              "Effect": "Allow",
-              "Resource": {
-                "Fn::Join": [
-                  "",
-                  [
-                    "arn:",
-                    {
-                      "Ref": "AWS::Partition",
-                    },
-                    ":sns:us-east-1:111111111111:AWSAccelerator-ControlTowerNotification",
-                  ],
-                ],
-              },
-              "Sid": "sns",
-            },
-            {
-              "Action": [
-                "kms:DescribeKey",
-                "kms:GenerateDataKey",
-                "kms:Decrypt",
-                "kms:Encrypt",
-              ],
-              "Effect": "Allow",
-              "Resource": {
-                "Fn::Join": [
-                  "",
-                  [
-                    "arn:",
-                    {
-                      "Ref": "AWS::Partition",
-                    },
-                    ":kms:us-east-1:111111111111:key/*",
-                  ],
-                ],
-              },
-              "Sid": "kms",
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "PolicyName": "ControlTowerNotificationsForwarderFunctionServiceRoleDefaultPolicyEBACE9AF",
-        "Roles": [
-          {
-            "Ref": "ControlTowerNotificationsForwarderFunctionServiceRoleE83D121D",
-          },
-        ],
-      },
-      "Type": "AWS::IAM::Policy",
-    },
-    "ControlTowerNotificationsForwarderFunctionServiceRoleE83D121D": {
-      "Metadata": {
-        "cdk_nag": {
-          "rules_to_suppress": [
-            {
-              "id": "AwsSolutions-IAM4",
-              "reason": "AWS Custom resource provider lambda role created by cdk.",
-            },
-          ],
-        },
-      },
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Statement": [
-            {
-              "Action": "sts:AssumeRole",
-              "Effect": "Allow",
-              "Principal": {
-                "Service": "lambda.amazonaws.com",
-              },
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "ManagedPolicyArns": [
-          {
-            "Fn::Join": [
-              "",
-              [
-                "arn:",
-                {
-                  "Ref": "AWS::Partition",
-                },
-                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-              ],
-            ],
-          },
-        ],
-      },
-      "Type": "AWS::IAM::Role",
-    },
     "CustomAuditManagerCreateDefaultReportsDestinationCustomResourceProviderHandler6BCBC433": {
       "DependsOn": [
         "CustomAuditManagerCreateDefaultReportsDestinationCustomResourceProviderRoleAEE72AE5",
@@ -3690,7 +3411,7 @@ def script_handler(events, context):
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -3701,7 +3422,7 @@ def script_handler(events, context):
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -3779,7 +3500,7 @@ def script_handler(events, context):
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -3790,13 +3511,13 @@ def script_handler(events, context):
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
     },
     "CustomDetectiveCreateMembersCustomResourceProviderLogGroup8A5563BD": {
-      "DeletionPolicy": "Retain",
+      "DeletionPolicy": "RetainExceptOnCreate",
       "Properties": {
         "KmsKeyId": {
           "Ref": "SsmParameterValueacceleratorkmscloudwatchkeyarnC96584B6F00A464EAD1953AFF4B05118Parameter",
@@ -3894,7 +3615,7 @@ def script_handler(events, context):
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -3905,13 +3626,13 @@ def script_handler(events, context):
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
     },
     "CustomDetectiveUpdateGraphCustomResourceProviderLogGroupDF150426": {
-      "DeletionPolicy": "Retain",
+      "DeletionPolicy": "RetainExceptOnCreate",
       "Properties": {
         "KmsKeyId": {
           "Ref": "SsmParameterValueacceleratorkmscloudwatchkeyarnC96584B6F00A464EAD1953AFF4B05118Parameter",
@@ -4032,7 +3753,7 @@ def script_handler(events, context):
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -4043,7 +3764,7 @@ def script_handler(events, context):
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -4110,6 +3831,27 @@ def script_handler(events, context):
                 },
                 {
                   "Action": [
+                    "organizations:DeregisterDelegatedAdministrator",
+                    "organizations:DescribeOrganization",
+                    "organizations:EnableAWSServiceAccess",
+                    "organizations:ListAWSServiceAccessForOrganization",
+                    "organizations:ListAccounts",
+                    "organizations:ListDelegatedAdministrators",
+                    "organizations:RegisterDelegatedAdministrator",
+                  ],
+                  "Condition": {
+                    "StringLikeIfExists": {
+                      "organizations:ServicePrincipal": [
+                        "guardduty.amazonaws.com",
+                      ],
+                    },
+                  },
+                  "Effect": "Allow",
+                  "Resource": "*",
+                  "Sid": "GuardDutyEnableOrganizationAdminAccountTaskOrganizationActions",
+                },
+                {
+                  "Action": [
                     "guardDuty:ListDetectors",
                     "guardDuty:ListOrganizationAdminAccounts",
                     "guardDuty:UpdateOrganizationConfiguration",
@@ -4127,9 +3869,61 @@ def script_handler(events, context):
                   "Action": [
                     "iam:CreateServiceLinkedRole",
                   ],
+                  "Condition": {
+                    "StringEquals": {
+                      "iam:AWSServiceName": [
+                        "guardduty.amazonaws.com",
+                        "malware-protection.guardduty.amazonaws.com",
+                      ],
+                    },
+                  },
                   "Effect": "Allow",
                   "Resource": "*",
-                  "Sid": "ServiceLinkedRoleSecurityHub",
+                  "Sid": "ServiceLinkedRoleGuardDuty",
+                },
+                {
+                  "Action": "iam:GetRole",
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":iam::*:role/*AWSServiceRoleForAmazonGuardDutyMalwareProtection",
+                      ],
+                    ],
+                  },
+                  "Sid": "IamGetRoleSid1",
+                },
+                {
+                  "Action": [
+                    "iam:PassRole",
+                  ],
+                  "Condition": {
+                    "StringEquals": {
+                      "iam:PassedToService": [
+                        "malware-protection-plan.guardduty.amazonaws.com",
+                        "malware-protection.guardduty.amazonaws.com",
+                      ],
+                    },
+                  },
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":iam::*:role/*",
+                      ],
+                    ],
+                  },
+                  "Sid": "AllowPassRoleToMalwareProtection",
                 },
               ],
               "Version": "2012-10-17",
@@ -4151,7 +3945,7 @@ def script_handler(events, context):
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -4162,7 +3956,7 @@ def script_handler(events, context):
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -4244,7 +4038,7 @@ def script_handler(events, context):
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -4255,7 +4049,7 @@ def script_handler(events, context):
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -4355,7 +4149,7 @@ def script_handler(events, context):
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -4366,7 +4160,7 @@ def script_handler(events, context):
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -4447,7 +4241,7 @@ def script_handler(events, context):
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -4458,7 +4252,7 @@ def script_handler(events, context):
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -4548,7 +4342,7 @@ def script_handler(events, context):
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -4559,7 +4353,7 @@ def script_handler(events, context):
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -4657,7 +4451,7 @@ def script_handler(events, context):
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -4668,7 +4462,7 @@ def script_handler(events, context):
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 180,
       },
       "Type": "AWS::Lambda::Function",
@@ -4751,7 +4545,7 @@ def script_handler(events, context):
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -4762,7 +4556,7 @@ def script_handler(events, context):
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -4929,7 +4723,11 @@ def script_handler(events, context):
           ],
         },
         "autoEnableOrgMembers": true,
+        "enableEc2MalwareProtection": false,
+        "enableEksAgent": false,
         "enableEksProtection": false,
+        "enableLambdaProtection": false,
+        "enableRdsProtection": false,
         "enableS3Protection": true,
         "guardDutyMemberAccountIds": [],
         "partition": {
@@ -5193,7 +4991,7 @@ def script_handler(events, context):
       "Properties": {
         "Name": "/accelerator/AWSAccelerator-SecurityAuditStack-222222222222-us-east-1/version",
         "Type": "String",
-        "Value": "1.13.0",
+        "Value": "1.15.0",
       },
       "Type": "AWS::SSM::Parameter",
     },

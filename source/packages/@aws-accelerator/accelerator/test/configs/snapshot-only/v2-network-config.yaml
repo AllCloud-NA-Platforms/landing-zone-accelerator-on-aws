@@ -25,6 +25,24 @@ transitGatewayConnects:
         value: CentralInspection
 
 transitGateways:
+  - name: MutlicastTgw
+    account: Network
+    region: *HOME_REGION
+    shareTargets:
+      organizationalUnits:
+        - Infrastructure
+    asn: 65426
+    dnsSupport: enable
+    vpnEcmpSupport: enable
+    defaultRouteTableAssociation: disable
+    defaultRouteTablePropagation: disable
+    autoAcceptSharingAttachments: enable
+    multicastSupport: enable
+    routeTables:
+      - name: Multicast-Core
+        routes: []
+      - name: Multicast-Isolated
+        routes: []
   - name: Network-Main
     account: Network
     region: *HOME_REGION
@@ -42,6 +60,7 @@ transitGateways:
     defaultRouteTableAssociation: disable
     defaultRouteTablePropagation: disable
     autoAcceptSharingAttachments: enable
+    securityGroupReferencingSupport: enable
     routeTables:
       - name: Network-Main-Core
         routes:
@@ -602,6 +621,8 @@ centralNetworkServices:
         subnets:
           - Network-Endpoints-A
           - Network-Endpoints-B
+        options:
+          securityGroupReferencingSupport: enable
       - name: accelerator-inbound-fips
         type: INBOUND
         vpc: Network-Endpoints
@@ -1329,6 +1350,8 @@ vpcs:
         subnets:
           - Network-EndpointsTgwAttach-A
           - Network-EndpointsTgwAttach-B
+        options:
+          securityGroupReferencingSupport: enable
       - name: Network-Endpoints-2
         transitGateway:
           name: Network-Main-2
@@ -1848,6 +1871,7 @@ vpcs:
           name: Network-Main
           account: Network
         options:
+          securityGroupReferencingSupport: enable
           applianceModeSupport: enable
         routeTableAssociations:
           - Network-Main-Shared
@@ -1999,6 +2023,8 @@ vpcs:
         subnets:
           - SharedServices-MainTgwAttach-A
           - SharedServices-MainTgwAttach-B
+        options:
+          securityGroupReferencingSupport: enable
     gatewayEndpoints:
       defaultPolicy: Default
       endpoints:
@@ -3033,6 +3059,7 @@ vpcs:
           name: Network-Main
           account: Network
         options:
+          securityGroupReferencingSupport: enable
           applianceModeSupport: enable
         routeTableAssociations:
           - Network-Main-Shared
@@ -3343,6 +3370,8 @@ vpcs:
         subnets:
           - Network-EndpointsTgwAttach-A
           - Network-EndpointsTgwAttach-B
+        options:
+          securityGroupReferencingSupport: enable
       - name: Network-Endpoints-2
         transitGateway:
           name: Network-Main-2
@@ -3823,6 +3852,8 @@ vpcs:
         subnets:
           - SharedServices-MainTgwAttach-A
           - SharedServices-MainTgwAttach-B
+        options:
+          securityGroupReferencingSupport: enable
     gatewayEndpoints:
       defaultPolicy: Default
       endpoints:

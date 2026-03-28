@@ -26,10 +26,9 @@ import {
   ServiceControlPolicyConfig,
 } from '@aws-accelerator/config';
 import winston from 'winston';
-import { createLogger } from '@aws-accelerator/utils/lib/logger';
+import { createLogger, DEFAULT_LAMBDA_RUNTIME, SsmResourceType } from '@aws-accelerator/utils';
 import path from 'path';
 import { pascalCase } from 'pascal-case';
-import { DEFAULT_LAMBDA_RUNTIME, SsmResourceType } from '@aws-accelerator/utils';
 
 export type policyItem = {
   /**
@@ -130,7 +129,7 @@ export class PolicyResource {
 
     if (!props.organizationConfig || !props.organizationConfig.enable) {
       this.logger.info('Organization configuration is not enabled. Skipping policy creation.');
-      this.getEmptyPolicyResult();
+      return this.getEmptyPolicyResult();
     }
     const policyConfigs = this.initializePolicyConfigs(props);
 
@@ -158,6 +157,15 @@ export class PolicyResource {
           );
 
           items.push({ name: policy!.name, id: policyResource.id });
+
+          // Populate the result arrays based on policy type
+          if (type === PolicyType.SERVICE_CONTROL_POLICY) {
+            scpItems.push({ name: policy!.name, id: policyResource.id });
+          } else if (type === PolicyType.RESOURCE_CONTROL_POLICY) {
+            rcpItems.push({ name: policy!.name, id: policyResource.id });
+          } else if (type === PolicyType.DECLARATIVE_POLICY_EC2) {
+            dce2Items.push({ name: policy!.name, id: policyResource.id });
+          }
         } catch (error) {
           this.logger.error(`Error creating policy ${policy!.name}: ${error}`);
           throw error;
@@ -378,10 +386,15 @@ export class PolicyResource {
       const quarantineScpItem = scpItems.find(
         item => item.name === props.organizationConfig.quarantineNewAccounts?.scpPolicyName,
       );
-      let quarantineScpId = '';
-      if (quarantineScpItem) {
-        quarantineScpId = quarantineScpItem.id;
+
+      if (!quarantineScpItem) {
+        this.logger.error(
+          `Quarantine SCP '${props.organizationConfig.quarantineNewAccounts?.scpPolicyName}' not found in scpItems`,
+        );
+        return;
       }
+
+      const quarantineScpId = quarantineScpItem.id;
 
       // Create resources to attach quarantine scp to
       // new accounts created in organizations

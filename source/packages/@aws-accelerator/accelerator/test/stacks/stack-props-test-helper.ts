@@ -1,3 +1,5 @@
+/* eslint @typescript-eslint/no-explicit-any: 0 */
+
 import {
   AccountsConfig,
   AuditManagerConfig,
@@ -25,7 +27,7 @@ import {
   SsmSettingsConfig,
   UserSetConfig,
 } from '@aws-accelerator/config';
-import { jest } from '@jest/globals';
+import { vi } from 'vitest';
 import { AcceleratorStackProps } from '../../lib/stacks/accelerator-stack';
 import { AcceleratorResourcePrefixes } from '../../utils/app-utils';
 
@@ -42,12 +44,13 @@ export function createAcceleratorStackProps(
   };
 
   const accountsConfig: Partial<AccountsConfig> = {
-    getAccountId: jest.fn(name => '123456789' + name),
-    getAccountIds: jest.fn(() => ['123456789', '234567890', '345678901', '456789012']),
-    getManagementAccountId: jest.fn(() => '234567890'),
-    getLogArchiveAccountId: jest.fn(() => '345678901'),
-    getAuditAccountId: jest.fn(() => auditAccountId ?? '456789012'),
-    getAccountNameById: jest.fn(() => 'accountName'),
+    getAccountId: vi.fn(name => '123456789' + name),
+    getAccountIds: vi.fn(() => ['123456789', '234567890', '345678901', '456789012']),
+    getManagementAccountId: vi.fn(() => '234567890'),
+    getLogArchiveAccountId: vi.fn(() => '345678901'),
+    getAuditAccountId: vi.fn(() => auditAccountId ?? '456789012'),
+    getAccountNameById: vi.fn(() => 'accountName'),
+    containsAccount: vi.fn(() => true),
     mandatoryAccounts: [],
     workloadAccounts: [],
   };
@@ -75,11 +78,15 @@ export function createAcceleratorStackProps(
   };
 
   const organizationConfig: Partial<OrganizationConfig> = {
-    getOrganizationId: jest.fn(() => '1234567890'),
-    getOrganizationalUnitArn: jest.fn(ouName => `arn:aws:organizations::123456789012:ou/o-a1b2c3d4e5/${ouName}`),
+    getOrganizationId: vi.fn(() => 'o-1234567890'),
+    getOrganizationalUnitArn: vi.fn(ouName => `arn:aws:organizations::123456789012:ou/o-a1b2c3d4e5/${ouName}`),
+    getOrganizationalUnitId: vi.fn(ouName => `ou-a1b2c3d4e5-${ouName}`),
     enable: true,
     backupPolicies: [],
     taggingPolicies: [],
+    serviceControlPolicies: [],
+    resourceControlPolicies: [],
+    declarativePolicies: [],
   };
 
   const centralSecurityServices: CentralSecurityServicesConfig = {
@@ -110,6 +117,7 @@ export function createAcceleratorStackProps(
     awsConfig: {
       aggregation,
     } as AwsConfig,
+    getDelegatedAccountName: vi.fn(() => 'Audit'),
   };
 
   const prefixes: AcceleratorResourcePrefixes = {
@@ -158,4 +166,23 @@ export function createAcceleratorStackProps(
   };
 
   return stackProps;
+}
+
+export function createSecurityStackProps(overrides?: Partial<AcceleratorStackProps>): AcceleratorStackProps {
+  const baseProps = createAcceleratorStackProps();
+  const props = {
+    ...baseProps,
+    configDirPath: './',
+    ...overrides,
+  } as AcceleratorStackProps;
+
+  // Ensure required properties are set
+  if (!props.securityConfig.awsConfig.ruleSets) {
+    (props.securityConfig.awsConfig as any).ruleSets = [];
+  }
+  if (!props.securityConfig.cloudWatch) {
+    (props.securityConfig as any).cloudWatch = { metricSets: [], alarmSets: [], logGroups: [] };
+  }
+
+  return props;
 }

@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`OperationsStack Construct(OperationsStack):  Snapshot Test 1`] = `
+exports[`OperationsStack > Construct(OperationsStack):  Snapshot Test 1`] = `
 {
   "Parameters": {
     "SsmParameterValueacceleratorassetskmskeyC96584B6F00A464EAD1953AFF4B05118Parameter": {
@@ -216,7 +216,7 @@ exports[`OperationsStack Construct(OperationsStack):  Snapshot Test 1`] = `
     "BackupKey60B97760": {
       "DeletionPolicy": "Retain",
       "Properties": {
-        "Description": "AWS Accelerator Backup Kms Key",
+        "Description": "KMS key for encrypting AWS Backup vaults and recovery points",
         "EnableKeyRotation": true,
         "KeyPolicy": {
           "Statement": [
@@ -488,7 +488,7 @@ exports[`OperationsStack Construct(OperationsStack):  Snapshot Test 1`] = `
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -499,7 +499,7 @@ exports[`OperationsStack Construct(OperationsStack):  Snapshot Test 1`] = `
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -685,7 +685,7 @@ exports[`OperationsStack Construct(OperationsStack):  Snapshot Test 1`] = `
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -696,7 +696,7 @@ exports[`OperationsStack Construct(OperationsStack):  Snapshot Test 1`] = `
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -1127,7 +1127,7 @@ exports[`OperationsStack Construct(OperationsStack):  Snapshot Test 1`] = `
       "Properties": {
         "Name": "/accelerator/AWSAccelerator-OperationsStack-111111111111-us-east-1/version",
         "Type": "String",
-        "Value": "1.13.0",
+        "Value": "1.15.0",
       },
       "Type": "AWS::SSM::Parameter",
     },
@@ -1305,6 +1305,42 @@ exports[`OperationsStack Construct(OperationsStack):  Snapshot Test 1`] = `
               ],
               "Effect": "Allow",
               "Resource": "*",
+            },
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "logs:DescribeLogStreams",
+                "logs:DescribeLogGroups",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":logs:us-east-1:111111111111:log-group:AWSAccelerator-sessionmanager-logs:*",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":logs:us-west-2:111111111111:log-group:AWSAccelerator-sessionmanager-logs:*",
+                    ],
+                  ],
+                },
+              ],
+              "Sid": "CloudWatchLogs",
             },
             {
               "Action": [

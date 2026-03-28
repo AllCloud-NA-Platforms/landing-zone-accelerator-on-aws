@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`DetectiveMembers Construct(DetectiveMembers):  Snapshot Test 1`] = `
+exports[`DetectiveMembers > Construct(DetectiveMembers):  Snapshot Test 1`] = `
 {
   "Resources": {
     "CustomDetectiveCreateMembersCustomResourceProviderHandler0A0D060D": {
@@ -16,7 +16,7 @@ exports[`DetectiveMembers Construct(DetectiveMembers):  Snapshot Test 1`] = `
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -27,13 +27,13 @@ exports[`DetectiveMembers Construct(DetectiveMembers):  Snapshot Test 1`] = `
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
     },
     "CustomDetectiveCreateMembersCustomResourceProviderLogGroup8A5563BD": {
-      "DeletionPolicy": "Retain",
+      "DeletionPolicy": "RetainExceptOnCreate",
       "Properties": {
         "KmsKeyId": {
           "Fn::GetAtt": [

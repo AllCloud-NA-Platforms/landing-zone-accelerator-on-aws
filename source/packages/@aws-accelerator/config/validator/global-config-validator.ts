@@ -11,7 +11,7 @@
  *  and limitations under the License.
  */
 
-import { createLogger } from '@aws-accelerator/utils/lib/logger';
+import { createLogger } from '@aws-accelerator/utils';
 import * as emailValidator from 'email-validator';
 import fs from 'fs';
 import path from 'path';
@@ -22,7 +22,7 @@ import { IamConfig } from '../lib/iam-config';
 import { SecurityConfig } from '../lib/security-config';
 import { OrganizationConfig } from '../lib/organization-config';
 import { CommonValidatorFunctions } from './common/common-validator-functions';
-import { DeploymentTargets, Region } from '../lib/common';
+import { DeploymentTargets } from '../lib/common';
 import { StreamMode } from '@aws-sdk/client-kinesis';
 
 export class GlobalConfigValidator {
@@ -178,6 +178,7 @@ export class GlobalConfigValidator {
     //
     this.validateAccessLogsBucketConfigDeploymentTargetOUs(values, ouIdNames, errors);
     this.validateAccessLogsBucketConfigDeploymentTargetAccounts(values, accountNames, errors);
+    this.validateImportedAccessLogBucketName(values, errors);
 
     //
     // Validate S3 configuration
@@ -1224,6 +1225,17 @@ export class GlobalConfigValidator {
         'The AWS ControlTower LandingZone configuration cannot be provided when the Organization enable property is set to false in organization-config.yaml file.',
       );
     }
+
+    // Validate account auto-enrollment version requirement
+    if (values.controlTower.landingZone?.accountAutoEnrollment) {
+      const version = parseFloat(values.controlTower.landingZone.version);
+      if (version < 3.1) {
+        errors.push(
+          `Account auto-enrollment requires AWS Control Tower Landing Zone version 3.1 or above. Current version: ${values.controlTower.landingZone.version}`,
+        );
+      }
+    }
+
     this.validateControlTowerControls(values, errors);
   }
 
@@ -1375,7 +1387,7 @@ export class GlobalConfigValidator {
     const deployOrder = regionByRegionDeployOrder.split(',').map(region => region.trim());
     // Ensure region from deploy order exists in enabledRegions
     for (const deployOrderRegion of deployOrder) {
-      if (!values.enabledRegions.includes(deployOrderRegion as Region)) {
+      if (!values.enabledRegions.includes(deployOrderRegion)) {
         errors.push(`Region ${deployOrderRegion} is not part of enabled regions.`);
       }
     }
@@ -1536,6 +1548,15 @@ export class GlobalConfigValidator {
     ) {
       errors.push(
         `allowRootSessions is enabled without rootCredentialsManagement being enabled. rootCredentialsManagement must be enabled as well`,
+      );
+    }
+  }
+
+  private validateImportedAccessLogBucketName(values: GlobalConfig, errors: string[]) {
+    const name = values.logging.accessLogBucket?.importedBucket?.name;
+    if (name && (!name.includes('${REGION}') || !name.includes('${ACCOUNT_ID}'))) {
+      errors.push(
+        `Imported Access log bucket name for ${name} must include replacement variables ACCOUNT_ID and REGION`,
       );
     }
   }

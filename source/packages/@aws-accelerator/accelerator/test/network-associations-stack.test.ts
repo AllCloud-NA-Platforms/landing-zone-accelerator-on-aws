@@ -11,7 +11,7 @@
  *  and limitations under the License.
  */
 
-import { describe, test, it } from '@jest/globals';
+import { describe, test, it, expect } from 'vitest';
 import { AcceleratorStage } from '../lib/accelerator-stage';
 import { snapShotTest } from './snapshot-test';
 import { Create } from './accelerator-test-helpers';
@@ -69,6 +69,17 @@ describe('NetworkAssociationsStack', () => {
       testVpcPeeringConfig(acceleratorTestStacks, account, region, peeringName, crossAcct, crossRegion);
     },
   );
+
+  test('Security groups are created for shared VPCs', () => {
+    // Audit account is in Security OU which receives SharedServices-App-A subnet
+    // The security group should be created in the recipient's NetworkAssociationsStack
+    const stack = acceleratorTestStacks.stacks.get('Audit-us-east-1')!;
+    const template = Template.fromStack(stack);
+
+    template.hasResourceProperties('AWS::EC2::SecurityGroup', {
+      GroupName: 'SharedServices-Main-Rsyslog-sg',
+    });
+  });
 });
 
 const testVpcPeeringConfig = (

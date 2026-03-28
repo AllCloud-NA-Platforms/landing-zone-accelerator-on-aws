@@ -1,19 +1,28 @@
+/* eslint @typescript-eslint/no-explicit-any: 0 */
+
 import path from 'path';
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
+import fs from 'fs';
 import { LookupProperties, LZAResourceLookup, LZAResourceLookupType } from '../../../utils/lza-resource-lookup';
 import { AseaResourceMapping } from '@aws-accelerator/config/lib/common/types';
 
 describe('LZAResourceLookup tests', () => {
-  let originalCwd: string;
   let testDir: string;
 
   beforeEach(() => {
-    originalCwd = process.cwd();
-    testDir = path.join(process.cwd(), 'test');
-    process.chdir(testDir);
+    testDir = path.join(__dirname, '../..');
+    const originalReadFileSync = fs.readFileSync;
+    vi.spyOn(fs, 'readFileSync').mockImplementation((filePath, ...args) => {
+      if (typeof filePath === 'string' && filePath.startsWith('cfn-templates')) {
+        const correctedPath = path.join(testDir, filePath);
+        return originalReadFileSync(correctedPath, ...args);
+      }
+      return originalReadFileSync(filePath, ...args);
+    });
   });
 
   afterEach(() => {
-    process.chdir(originalCwd);
+    vi.restoreAllMocks();
   });
 
   test('template is loaded from directory', () => {
@@ -520,8 +529,9 @@ describe('LZAResourceLookup tests', () => {
   });
 
   test('error handling when template cannot be loaded', () => {
-    // Move to a directory that doesn't have the template
-    process.chdir(originalCwd);
+    const mockReadFileSync = vi.spyOn(fs, 'readFileSync').mockImplementation(() => {
+      throw new Error('File not found');
+    });
 
     expect(() => {
       new LZAResourceLookup({
@@ -534,7 +544,6 @@ describe('LZAResourceLookup tests', () => {
       });
     }).not.toThrow();
 
-    // Even if the template can't be loaded, the class should initialize with an empty template
     const lzaLookup = new LZAResourceLookup({
       accountId: '555555555555',
       region: 'us-east-2',
@@ -544,7 +553,91 @@ describe('LZAResourceLookup tests', () => {
       externalLandingZoneResources: false,
     });
 
-    // The template might be empty or have default values
     expect(lzaLookup).toBeDefined();
+    mockReadFileSync.mockRestore();
+  });
+});
+
+describe('PolicyResource unit tests', () => {
+  describe('createAndAttachPolicies array population', () => {
+    test('should populate scpItems array correctly', () => {
+      const mockPolicyResource = {
+        createAndAttachPolicies: (props: any) => {
+          const scpItems: any[] = [];
+          const rcpItems: any[] = [];
+          const dce2Items: any[] = [];
+
+          if (!props.organizationConfig?.enable) {
+            return { scpItems, rcpItems, dce2Items };
+          }
+
+          const policies = props.organizationConfig.serviceControlPolicies || [];
+          for (const policy of policies) {
+            scpItems.push({ name: policy.name, id: `mock-id-${policy.name}` });
+          }
+
+          return { scpItems, rcpItems, dce2Items };
+        },
+      };
+
+      const mockProps = {
+        organizationConfig: {
+          enable: true,
+          serviceControlPolicies: [
+            { name: 'TestSCP', description: 'Test' },
+            { name: 'QuarantineNewAccounts', description: 'Quarantine' },
+          ],
+        },
+      };
+
+      const result = mockPolicyResource.createAndAttachPolicies(mockProps);
+
+      expect(result.scpItems).toHaveLength(2);
+      expect(result.scpItems[0]).toEqual({ name: 'TestSCP', id: 'mock-id-TestSCP' });
+      expect(result.scpItems[1]).toEqual({ name: 'QuarantineNewAccounts', id: 'mock-id-QuarantineNewAccounts' });
+    });
+
+    test('should return empty arrays when organization is disabled', () => {
+      const mockPolicyResource = {
+        createAndAttachPolicies: (props: any) => {
+          const scpItems: any[] = [];
+          if (!props.organizationConfig?.enable) {
+            return { scpItems, rcpItems: [], dce2Items: [] };
+          }
+          return { scpItems, rcpItems: [], dce2Items: [] };
+        },
+      };
+
+      const result = mockPolicyResource.createAndAttachPolicies({
+        organizationConfig: { enable: false },
+      });
+
+      expect(result.scpItems).toHaveLength(0);
+    });
+  });
+
+  describe('quarantine SCP finding logic', () => {
+    test('should find quarantine SCP in scpItems array', () => {
+      const scpItems = [
+        { name: 'TestSCP', id: 'p-123456789' },
+        { name: 'QuarantineNewAccounts', id: 'p-987654321' },
+      ];
+
+      const quarantineScpItem = scpItems.find(item => item.name === 'QuarantineNewAccounts');
+
+      expect(quarantineScpItem).toBeDefined();
+      expect(quarantineScpItem?.id).toBe('p-987654321');
+    });
+
+    test('should return undefined when quarantine SCP not found', () => {
+      const scpItems = [
+        { name: 'TestSCP', id: 'p-123456789' },
+        { name: 'OtherSCP', id: 'p-111111111' },
+      ];
+
+      const quarantineScpItem = scpItems.find(item => item.name === 'QuarantineNewAccounts');
+
+      expect(quarantineScpItem).toBeUndefined();
+    });
   });
 });

@@ -15,11 +15,11 @@ import * as fs from 'fs';
 import * as yaml from 'js-yaml';
 import * as path from 'path';
 
-import { createLogger } from '@aws-accelerator/utils/lib/logger';
+import { createLogger } from '@aws-accelerator/utils';
 
 import * as t from './common';
-import * as i from './models/network-config';
 import * as CustomizationsConfig from './customizations-config';
+import * as i from './models/network-config';
 import { ReplacementsConfig } from './replacements-config';
 
 const logger = createLogger(['network-config']);
@@ -27,7 +27,7 @@ const logger = createLogger(['network-config']);
 export class DefaultVpcsConfig implements i.IDefaultVpcsConfig {
   readonly delete = false;
   readonly excludeAccounts: string[] | undefined = [];
-  readonly excludeRegions: t.Region[] | undefined = undefined;
+  readonly excludeRegions: string[] | undefined = undefined;
 }
 
 export class TransitGatewayRouteTableVpcEntryConfig implements i.ITransitGatewayRouteTableVpcEntryConfig {
@@ -68,7 +68,7 @@ export class TransitGatewayRouteTableConfig implements i.ITransitGatewayRouteTab
 export class TransitGatewayPeeringRequesterConfig implements i.ITransitGatewayPeeringRequesterConfig {
   readonly transitGatewayName: string = '';
   readonly account: string = '';
-  readonly region: t.Region = 'us-east-1';
+  readonly region: string = 'us-east-1';
   readonly routeTableAssociations: string = '';
   readonly tags: t.Tag[] | undefined = undefined;
 }
@@ -76,7 +76,7 @@ export class TransitGatewayPeeringRequesterConfig implements i.ITransitGatewayPe
 export class TransitGatewayPeeringAccepterConfig implements i.ITransitGatewayPeeringAccepterConfig {
   readonly transitGatewayName: string = '';
   readonly account: string = '';
-  readonly region: t.Region = 'us-east-1';
+  readonly region: string = 'us-east-1';
   readonly routeTableAssociations: string = '';
   readonly autoAccept: boolean | undefined = undefined;
   readonly applyTags: boolean | undefined = undefined;
@@ -91,7 +91,7 @@ export class TransitGatewayPeeringConfig implements i.ITransitGatewayPeeringConf
 export class TransitGatewayConfig implements i.ITransitGatewayConfig {
   readonly name: string = '';
   readonly account: string = '';
-  readonly region: t.Region = 'us-east-1';
+  readonly region: string = 'us-east-1';
   readonly shareTargets: t.ShareTargets | undefined = undefined;
   readonly asn: number = 65521;
   readonly dnsSupport: t.EnableDisable = 'enable';
@@ -99,9 +99,12 @@ export class TransitGatewayConfig implements i.ITransitGatewayConfig {
   readonly defaultRouteTableAssociation: t.EnableDisable = 'enable';
   readonly defaultRouteTablePropagation: t.EnableDisable = 'enable';
   readonly autoAcceptSharingAttachments: t.EnableDisable = 'disable';
+  readonly multicastSupport: t.EnableDisable = 'disable';
+  readonly securityGroupReferencingSupport: t.EnableDisable = 'disable';
   readonly routeTables: TransitGatewayRouteTableConfig[] = [];
   readonly transitGatewayCidrBlocks: t.NonEmptyString[] | undefined = undefined;
   readonly transitGatewayIpv6CidrBlocks: t.NonEmptyString[] | undefined = undefined;
+  readonly transitGatewayFlowLogs: t.TransitGatewayFlowLogsConfig | undefined = undefined;
   readonly tags: t.Tag[] | undefined = undefined;
 }
 
@@ -111,7 +114,7 @@ export class DxVirtualInterfaceConfig implements i.IDxVirtualInterfaceConfig {
   readonly customerAsn: number = 64512;
   readonly interfaceName: string = '';
   readonly ownerAccount: string = '';
-  readonly region: t.Region = 'us-east-1';
+  readonly region: string = 'us-east-1';
   readonly type: i.DxVirtualInterfaceType = 'transit';
   readonly vlan: number = 1;
   readonly addressFamily: i.IpVersionType | undefined = undefined;
@@ -156,7 +159,7 @@ export class IpamPoolConfig implements i.IIpamPoolConfig {
   readonly allocationResourceTags: t.Tag[] | undefined = undefined;
   readonly autoImport: boolean | undefined = undefined;
   readonly description: string | undefined = undefined;
-  readonly locale: t.Region | undefined = undefined;
+  readonly locale: string | undefined = undefined;
   readonly provisionedCidrs: string[] | undefined = undefined;
   readonly publiclyAdvertisable: boolean | undefined = undefined;
   readonly shareTargets: t.ShareTargets = new t.ShareTargets();
@@ -166,9 +169,9 @@ export class IpamPoolConfig implements i.IIpamPoolConfig {
 
 export class IpamConfig implements i.IIpamConfig {
   readonly name: string = '';
-  readonly region: t.Region = 'us-east-1';
+  readonly region: string = 'us-east-1';
   readonly description: string | undefined = undefined;
-  readonly operatingRegions: t.Region[] | undefined = undefined;
+  readonly operatingRegions: string[] | undefined = undefined;
   readonly scopes: IpamScopeConfig[] | undefined = undefined;
   readonly pools: IpamPoolConfig[] | undefined = undefined;
   readonly tags: t.Tag[] | undefined = undefined;
@@ -231,6 +234,7 @@ export class TransitGatewayAttachmentOptionsConfig implements i.ITransitGatewayA
   readonly applianceModeSupport: t.EnableDisable | undefined = undefined;
   readonly dnsSupport: t.EnableDisable | undefined = undefined;
   readonly ipv6Support: t.EnableDisable | undefined = undefined;
+  readonly securityGroupReferencingSupport: t.EnableDisable | undefined = undefined;
 }
 
 export class LocalGatewayRouteTableConfig implements i.ILocalGatewayRouteTableConfig {
@@ -332,7 +336,7 @@ export class PrefixListSourceConfig implements i.IPrefixListSourceConfig {
 export class PrefixListConfig implements i.IPrefixListConfig {
   readonly name: string = '';
   readonly accounts: string[] | undefined = undefined;
-  readonly regions: t.Region[] | undefined = undefined;
+  readonly regions: string[] | undefined = undefined;
   readonly deploymentTargets: t.DeploymentTargets | undefined = undefined;
   readonly addressFamily: i.IpAddressFamilyType = 'IPv4';
   readonly maxEntries: number = 1;
@@ -364,7 +368,7 @@ export class NetworkAclSubnetSelection implements i.INetworkAclSubnetSelection {
   readonly vpc: string = '';
   readonly subnet: string = '';
   readonly ipv6: boolean | undefined = undefined;
-  readonly region: t.Region | undefined = undefined;
+  readonly region: string | undefined = undefined;
 }
 
 export class NetworkAclInboundRuleConfig implements i.INetworkAclInboundRuleConfig {
@@ -408,7 +412,7 @@ export class IpamAllocationConfig implements i.IIpamAllocationConfig {
 export class DhcpOptsConfig implements i.IDhcpOptsConfig {
   readonly name: string = '';
   readonly accounts: string[] = [''];
-  readonly regions: t.Region[] = ['us-east-1'];
+  readonly regions: string[] = ['us-east-1'];
   readonly domainName: string | undefined = undefined;
   readonly domainNameServers: string[] | undefined = undefined;
   readonly netbiosNameServers: string[] | undefined = undefined;
@@ -455,6 +459,7 @@ export class VpnTunnelOptionsSpecificationsConfig implements i.IVpnTunnelOptions
   readonly replayWindowSize: number | undefined = undefined;
   readonly startupAction: i.StartupActionType | undefined = undefined;
   readonly tunnelInsideCidr: string | undefined = undefined;
+  readonly tunnelInsideIpv6Cidr: string | undefined = undefined;
   readonly tunnelLifecycleControl: boolean | undefined = undefined;
 }
 
@@ -462,6 +467,9 @@ export class VpnConnectionConfig implements i.IVpnConnectionConfig {
   readonly name: string = '';
   readonly amazonIpv4NetworkCidr: string | undefined = undefined;
   readonly customerIpv4NetworkCidr: string | undefined = undefined;
+  readonly amazonIpv6NetworkCidr: string | undefined = undefined;
+  readonly customerIpv6NetworkCidr: string | undefined = undefined;
+  readonly outsideIpAddressType: i.OutsideIpAddressType | undefined = undefined;
   readonly enableVpnAcceleration: boolean | undefined = undefined;
   readonly transitGateway: string | undefined = undefined;
   readonly vpc: string | undefined = undefined;
@@ -475,7 +483,7 @@ export class VpnConnectionConfig implements i.IVpnConnectionConfig {
 export class CustomerGatewayConfig implements i.ICustomerGatewayConfig {
   readonly name: string = '';
   readonly account: string = '';
-  readonly region: t.Region = 'us-east-1';
+  readonly region: string = 'us-east-1';
   readonly ipAddress: string = '';
   readonly asn: number = 65000;
   readonly tags: t.Tag[] | undefined = undefined;
@@ -500,7 +508,7 @@ export class VpcIpv6Config implements i.IVpcIpv6Config {
 export class VpcConfig implements i.IVpcConfig {
   readonly name: string = '';
   readonly account: string = '';
-  readonly region: t.Region = 'us-east-1';
+  readonly region: string = 'us-east-1';
   readonly cidrs: string[] | undefined = undefined;
   readonly defaultSecurityGroupRulesDeletion: boolean | undefined = false;
   readonly dhcpOptions: string | undefined = undefined;
@@ -534,7 +542,7 @@ export class VpcConfig implements i.IVpcConfig {
 
 export class VpcTemplatesConfig implements i.IVpcTemplatesConfig {
   readonly name: string = '';
-  readonly region: t.Region = 'us-east-1';
+  readonly region: string = 'us-east-1';
   readonly deploymentTargets: t.DeploymentTargets = new t.DeploymentTargets();
   readonly cidrs: string[] | undefined = undefined;
   readonly ipamAllocations: IpamAllocationConfig[] | undefined = undefined;
@@ -568,7 +576,7 @@ export class VpcTemplatesConfig implements i.IVpcTemplatesConfig {
 export class ResolverRuleConfig implements i.IResolverRuleConfig {
   readonly name: string = '';
   readonly domainName: string = '';
-  readonly excludedRegions: t.Region[] | undefined = undefined;
+  readonly excludedRegions: string[] | undefined = undefined;
   readonly inboundEndpointTarget: string | undefined = undefined;
   readonly ruleType: i.RuleType | undefined = 'FORWARD';
   readonly shareTargets: t.ShareTargets | undefined = undefined;
@@ -591,7 +599,7 @@ export class DnsQueryLogsConfig implements i.IDnsQueryLogsConfig {
   readonly name: string = '';
   readonly destinations: t.LogDestinationType[] = ['s3'];
   readonly shareTargets: t.ShareTargets | undefined = undefined;
-  readonly excludedRegions: t.Region[] | undefined = undefined;
+  readonly excludedRegions: string[] | undefined = undefined;
 }
 
 export class DnsFirewallRulesConfig implements i.IDnsFirewallRulesConfig {
@@ -607,7 +615,7 @@ export class DnsFirewallRulesConfig implements i.IDnsFirewallRulesConfig {
 
 export class DnsFirewallRuleGroupConfig implements i.IDnsFirewallRuleGroupConfig {
   readonly name: string = '';
-  readonly regions: t.Region[] = ['us-east-1'];
+  readonly regions: string[] = ['us-east-1'];
   readonly rules: DnsFirewallRulesConfig[] = [];
   readonly shareTargets: t.ShareTargets | undefined = undefined;
   readonly tags: t.Tag[] | undefined = undefined;
@@ -620,11 +628,9 @@ export class LocalResolverConfig implements i.IResolverConfig {
   readonly rules?: ResolverRuleConfig[] | undefined = undefined;
 }
 
-export class VpcResolverConfig implements i.IResolverConfig {
+export class VpcResolverConfig implements i.IVpcResolverConfig {
   readonly endpoints: ResolverEndpointConfig[] | undefined = undefined;
   readonly queryLogs: DnsQueryLogsConfig | undefined = undefined;
-  readonly firewallRuleGroups?: DnsFirewallRuleGroupConfig[] | undefined = undefined;
-  readonly rules?: ResolverRuleConfig[] | undefined = undefined;
 }
 export class ResolverConfig implements i.IResolverConfig {
   readonly endpoints: ResolverEndpointConfig[] | undefined = undefined;
@@ -740,7 +746,7 @@ export class NfwRuleGroupRuleConfig implements i.INfwRuleGroupRuleConfig {
 
 export class NfwRuleGroupConfig implements i.INfwRuleGroupConfig {
   readonly name: string = '';
-  readonly regions: t.Region[] = [];
+  readonly regions: string[] = [];
   readonly capacity: number = 123;
   readonly type: i.NfwRuleType = 'STATEFUL';
   readonly description: string | undefined = undefined;
@@ -750,8 +756,9 @@ export class NfwRuleGroupConfig implements i.INfwRuleGroupConfig {
 }
 
 export class NfwStatefulRuleGroupReferenceConfig implements i.INfwStatefulRuleGroupReferenceConfig {
-  readonly name: string = '';
+  readonly name: string | undefined = undefined;
   readonly priority: number | undefined = undefined;
+  readonly managedStatefulRuleGroupName: string | undefined = undefined;
 }
 
 export class NfwStatelessRuleGroupReferenceConfig implements i.INfwStatelessRuleGroupReferenceConfig {
@@ -772,7 +779,7 @@ export class NfwFirewallPolicyPolicyConfig implements i.INfwFirewallPolicyPolicy
 export class NfwFirewallPolicyConfig implements i.INfwFirewallPolicyConfig {
   readonly name: string = '';
   readonly firewallPolicy: NfwFirewallPolicyPolicyConfig = new NfwFirewallPolicyPolicyConfig();
-  readonly regions: t.Region[] = [];
+  readonly regions: string[] = [];
   readonly description: string | undefined = undefined;
   readonly shareTargets: t.ShareTargets | undefined = undefined;
   readonly tags: t.Tag[] | undefined = undefined;
@@ -944,9 +951,14 @@ export class NetworkConfig implements i.INetworkConfig {
   static load(dir: string, replacementsConfig: ReplacementsConfig): NetworkConfig {
     const initialBuffer = fs.readFileSync(path.join(dir, NetworkConfig.FILENAME), 'utf8');
     const buffer = replacementsConfig ? replacementsConfig.preProcessBuffer(initialBuffer) : initialBuffer;
-    const values = t.parseNetworkConfig(yaml.load(buffer));
-
-    return new NetworkConfig(values);
+    const schema = t.createSchema(dir, replacementsConfig);
+    try {
+      const values = t.parseNetworkConfig(yaml.load(buffer, { schema }));
+      return new NetworkConfig(values);
+    } catch (e) {
+      logger.error('parsing network-config failed', e);
+      throw new Error('Could not parse network configuration');
+    }
   }
 
   /**

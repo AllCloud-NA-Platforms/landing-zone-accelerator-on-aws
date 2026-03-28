@@ -22,6 +22,11 @@ import { ConfigureRootUserManagementModule } from '../lib/actions/aws-iam/root-u
 import { SsmBlockPublicDocumentSharingModule } from '../lib/actions/aws-ssm/ssm-block-public-document-sharing';
 import { AcceleratorModules, AcceleratorModuleStages, ModuleExecutionPhase } from './enums';
 import { AcceleratorModuleStageDetailsType, AcceleratorModuleStageOrdersType, ModuleParams } from './types';
+import { ManageAccountsAliasModule } from '../lib/actions/aws-organizations/manage-accounts-alias';
+import { AcceleratorPrerequisites } from '../lib/actions/prerequisites/accelerator-prerequisites';
+import { PipelinePrerequisites } from '../lib/actions/prerequisites/pipeline-prerequisites';
+import { ManageAutomationRulesModule } from '../lib/actions/aws-security-hub/manage-automation-rules';
+import { EnrollAccountsModule } from '../lib/actions/control-tower/enroll-accounts';
 
 /**
  * Execution order for the Accelerator module stages
@@ -77,20 +82,11 @@ export const AcceleratorModuleStageDetails: AcceleratorModuleStageDetailsType[] 
     },
     modules: [
       {
-        name: AcceleratorModules.SETUP_CONTROL_TOWER_LANDING_ZONE,
-        description: 'Manage AWS Control Tower Landing Zone',
+        name: AcceleratorModules.PIPELINE_PREREQUISITES,
+        description: 'Pipeline Prerequisites module',
         runOrder: 1,
         handler: async (params: ModuleParams) => {
-          return await SetupControlTowerLandingZoneModule.execute(params);
-        },
-        executionPhase: ModuleExecutionPhase.DEPLOY,
-      },
-      {
-        name: AcceleratorModules.CREATE_STACK_POLICY,
-        description: 'Setup Stack Policy in accounts',
-        runOrder: 1,
-        handler: async (params: ModuleParams) => {
-          return await CreateStackPolicyModule.execute(params);
+          return await PipelinePrerequisites.execute(params);
         },
         executionPhase: ModuleExecutionPhase.DEPLOY,
       },
@@ -104,18 +100,9 @@ export const AcceleratorModuleStageDetails: AcceleratorModuleStageDetailsType[] 
         executionPhase: ModuleExecutionPhase.DEPLOY,
       },
       {
-        name: AcceleratorModules.REGISTER_ORGANIZATIONAL_UNIT,
-        description: 'Register AWS Organizations Organizational Unit (OU) with AWS Control Tower',
-        runOrder: 3,
-        handler: async (params: ModuleParams) => {
-          return await RegisterOrganizationalUnitModule.execute(params);
-        },
-        executionPhase: ModuleExecutionPhase.DEPLOY,
-      },
-      {
         name: AcceleratorModules.INVITE_ACCOUNTS_TO_ORGANIZATIONS,
         description: 'Invite AWS Accounts to AWS Organizations',
-        runOrder: 4,
+        runOrder: 3,
         handler: async (params: ModuleParams) => {
           return await InviteAccountsToOrganizationsModule.execute(params);
         },
@@ -124,18 +111,45 @@ export const AcceleratorModuleStageDetails: AcceleratorModuleStageDetailsType[] 
       {
         name: AcceleratorModules.MOVE_ACCOUNTS,
         description: 'Move AWS Accounts to destination AWS Organizations Organizational Unit (OU)',
-        runOrder: 5,
+        runOrder: 4,
         handler: async (params: ModuleParams) => {
           return await MoveAccountModule.execute(params);
         },
         executionPhase: ModuleExecutionPhase.DEPLOY,
       },
       {
-        name: AcceleratorModules.ROOT_USER_MANAGEMENT,
-        description: 'Configure IAM Root User Management',
+        name: AcceleratorModules.SETUP_CONTROL_TOWER_LANDING_ZONE,
+        description: 'Manage AWS Control Tower Landing Zone',
+        runOrder: 5,
+        handler: async (params: ModuleParams) => {
+          return await SetupControlTowerLandingZoneModule.execute(params);
+        },
+        executionPhase: ModuleExecutionPhase.DEPLOY,
+      },
+      {
+        name: AcceleratorModules.REGISTER_ORGANIZATIONAL_UNIT,
+        description: 'Register AWS Organizations Organizational Unit (OU) with AWS Control Tower',
         runOrder: 6,
         handler: async (params: ModuleParams) => {
+          return await RegisterOrganizationalUnitModule.execute(params);
+        },
+        executionPhase: ModuleExecutionPhase.DEPLOY,
+      },
+      {
+        name: AcceleratorModules.ROOT_USER_MANAGEMENT,
+        description: 'Configure IAM Root User Management',
+        runOrder: 7,
+        handler: async (params: ModuleParams) => {
           return await ConfigureRootUserManagementModule.execute(params);
+        },
+        executionPhase: ModuleExecutionPhase.DEPLOY,
+      },
+      {
+        name: AcceleratorModules.CREATE_STACK_POLICY,
+        description: 'Setup Stack Policy in accounts',
+        runOrder: 8,
+        handler: async (params: ModuleParams) => {
+          return await CreateStackPolicyModule.execute(params);
         },
         executionPhase: ModuleExecutionPhase.DEPLOY,
       },
@@ -146,7 +160,26 @@ export const AcceleratorModuleStageDetails: AcceleratorModuleStageDetailsType[] 
       name: AcceleratorModuleStages.ACCOUNTS,
       runOrder: AcceleratorModuleStageOrders[AcceleratorModuleStages.ACCOUNTS].runOrder,
     },
-    modules: [],
+    modules: [
+      {
+        name: AcceleratorModules.ENROLL_ACCOUNTS,
+        description: 'Enroll new accounts with AWS Control Tower',
+        runOrder: 1,
+        handler: async (params: ModuleParams) => {
+          return await EnrollAccountsModule.execute(params);
+        },
+        executionPhase: ModuleExecutionPhase.DEPLOY,
+      },
+      {
+        name: AcceleratorModules.MANAGE_ACCOUNTS_ALIAS,
+        description: 'Manage the alias of accounts',
+        runOrder: 2,
+        handler: async (params: ModuleParams) => {
+          return await ManageAccountsAliasModule.execute(params);
+        },
+        executionPhase: ModuleExecutionPhase.DEPLOY,
+      },
+    ],
   },
   {
     stage: {
@@ -167,7 +200,17 @@ export const AcceleratorModuleStageDetails: AcceleratorModuleStageDetailsType[] 
       name: AcceleratorModuleStages.LOGGING,
       runOrder: AcceleratorModuleStageOrders[AcceleratorModuleStages.LOGGING].runOrder,
     },
-    modules: [],
+    modules: [
+      {
+        name: AcceleratorModules.ACCELERATOR_PREREQUISITES,
+        description: 'Prerequisites module',
+        runOrder: 1,
+        handler: async (params: ModuleParams) => {
+          return await AcceleratorPrerequisites.execute(params);
+        },
+        executionPhase: ModuleExecutionPhase.DEPLOY,
+      },
+    ],
   },
   {
     stage: {
@@ -202,6 +245,15 @@ export const AcceleratorModuleStageDetails: AcceleratorModuleStageDetailsType[] 
         runOrder: 1,
         handler: async (params: ModuleParams) => {
           return await SsmBlockPublicDocumentSharingModule.execute(params);
+        },
+        executionPhase: ModuleExecutionPhase.DEPLOY,
+      },
+      {
+        name: AcceleratorModules.MANAGE_AUTOMATION_RULES,
+        description: 'Manage Automation Rules module',
+        runOrder: 1,
+        handler: async (params: ModuleParams) => {
+          return await ManageAutomationRulesModule.execute(params);
         },
         executionPhase: ModuleExecutionPhase.DEPLOY,
       },
@@ -289,13 +341,7 @@ export const AcceleratorModuleStageDetails: AcceleratorModuleStageDetailsType[] 
  * List of module name which execution can be controlled by environment variable settings
  *
  */
-export const EXECUTION_CONTROLLABLE_MODULES: string[] = [
-  AcceleratorModules.CREATE_ORGANIZATIONAL_UNIT,
-  AcceleratorModules.REGISTER_ORGANIZATIONAL_UNIT,
-  AcceleratorModules.INVITE_ACCOUNTS_TO_ORGANIZATIONS,
-  AcceleratorModules.MOVE_ACCOUNTS,
-  AcceleratorModules.SETUP_CONTROL_TOWER_LANDING_ZONE,
-];
+export const EXECUTION_CONTROLLABLE_MODULES: string[] = Object.values(AcceleratorModules);
 
 /**
  * Maximum number of parallel module execution
@@ -304,3 +350,19 @@ export const EXECUTION_CONTROLLABLE_MODULES: string[] = [
  * This is the maximum number of parallel module execution. This is used to limit the number of parallel module execution.
  */
 export const MaxConcurrentModuleExecutionLimit = 50;
+
+/**
+ * Default minimum CodeBuild concurrency threshold for prerequisites
+ *
+ * @description
+ * This is the default minimum CodeBuild concurrency threshold for prerequisites. This is used to limit the number of parallel module execution.
+ */
+export const DefaultMinimumCodeBuildConcurrencyThreshold = '3';
+
+/**
+ * Default minimum Lambda Concurrency threshold for prerequisites
+ *
+ * @description
+ * This is the default minimum Lambda Concurrency threshold for prerequisites. This is used to limit the number of parallel module execution.
+ */
+export const DefaultMinimumLambdaConcurrencyThreshold = '100';

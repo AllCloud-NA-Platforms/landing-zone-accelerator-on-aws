@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`NetworkVpcV2Stacks Construct(LbStack-Network-us-east-1-Network-Secondary):  Snapshot Test 1`] = `
+exports[`NetworkVpcV2Stacks > Construct(LbStack-Network-us-east-1-Network-Secondary):  Snapshot Test 1`] = `
 {
   "Metadata": {
     "lzaLookup": {
@@ -75,6 +75,12 @@ exports[`NetworkVpcV2Stacks Construct(LbStack-Network-us-east-1-Network-Secondar
         "GatewayLoadBalancerArns": [
           {
             "Ref": "AcceleratorGwlbSecondaryGatewayLoadBalancerD11F9F31",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Accelerator-GWLB-secondary",
           },
         ],
       },
@@ -157,7 +163,7 @@ exports[`NetworkVpcV2Stacks Construct(LbStack-Network-us-east-1-Network-Secondar
         "Description": "Custom resource provider to put cross-account ssm parameter value",
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -168,7 +174,7 @@ exports[`NetworkVpcV2Stacks Construct(LbStack-Network-us-east-1-Network-Secondar
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -219,6 +225,9 @@ exports[`NetworkVpcV2Stacks Construct(LbStack-Network-us-east-1-Network-Secondar
                   "Action": [
                     "ssm:DeleteParameter",
                     "ssm:PutParameter",
+                    "ssm:GetParameters",
+                    "ssm:AddTagsToResource",
+                    "ssm:RemoveTagsFromResource",
                   ],
                   "Effect": "Allow",
                   "Resource": [
@@ -280,7 +289,7 @@ exports[`NetworkVpcV2Stacks Construct(LbStack-Network-us-east-1-Network-Secondar
       "Properties": {
         "Name": "/accelerator/AWSAccelerator-LoadBalancersStack-Network-Secondary-555555555555-us-east-1/version",
         "Type": "String",
-        "Value": "1.13.0",
+        "Value": "1.15.0",
       },
       "Type": "AWS::SSM::Parameter",
     },
@@ -298,7 +307,7 @@ exports[`NetworkVpcV2Stacks Construct(LbStack-Network-us-east-1-Network-Secondar
 }
 `;
 
-exports[`NetworkVpcV2Stacks Construct(LbStack-Network-us-east-1-Network-Secondary-V2):  Snapshot Test 1`] = `
+exports[`NetworkVpcV2Stacks > Construct(LbStack-Network-us-east-1-Network-Secondary-V2):  Snapshot Test 1`] = `
 {
   "Metadata": {
     "lzaLookup": {
@@ -318,7 +327,7 @@ exports[`NetworkVpcV2Stacks Construct(LbStack-Network-us-east-1-Network-Secondar
       "Properties": {
         "Name": "/accelerator/AWSAccelerator-LoadBalancersStack-Network-Secondary-V2-555555555555-us-east-1/version",
         "Type": "String",
-        "Value": "1.13.0",
+        "Value": "1.15.0",
       },
       "Type": "AWS::SSM::Parameter",
     },
@@ -336,7 +345,7 @@ exports[`NetworkVpcV2Stacks Construct(LbStack-Network-us-east-1-Network-Secondar
 }
 `;
 
-exports[`NetworkVpcV2Stacks Construct(NackStack-Network-us-east-1-Network-Secondary):  Snapshot Test 1`] = `
+exports[`NetworkVpcV2Stacks > Construct(NackStack-Network-us-east-1-Network-Secondary):  Snapshot Test 1`] = `
 {
   "Metadata": {
     "lzaLookup": {
@@ -1258,7 +1267,7 @@ exports[`NetworkVpcV2Stacks Construct(NackStack-Network-us-east-1-Network-Second
       "Properties": {
         "Name": "/accelerator/AWSAccelerator-NaclsStack-Network-Secondary-555555555555-us-east-1/version",
         "Type": "String",
-        "Value": "1.13.0",
+        "Value": "1.15.0",
       },
       "Type": "AWS::SSM::Parameter",
     },
@@ -1296,7 +1305,7 @@ exports[`NetworkVpcV2Stacks Construct(NackStack-Network-us-east-1-Network-Second
 }
 `;
 
-exports[`NetworkVpcV2Stacks Construct(NackStack-Network-us-east-1-Network-Secondary-V2):  Snapshot Test 1`] = `
+exports[`NetworkVpcV2Stacks > Construct(NackStack-Network-us-east-1-Network-Secondary-V2):  Snapshot Test 1`] = `
 {
   "Metadata": {
     "lzaLookup": {
@@ -2077,7 +2086,7 @@ exports[`NetworkVpcV2Stacks Construct(NackStack-Network-us-east-1-Network-Second
       "Properties": {
         "Name": "/accelerator/AWSAccelerator-NaclsStack-Network-Secondary-V2-555555555555-us-east-1/version",
         "Type": "String",
-        "Value": "1.13.0",
+        "Value": "1.15.0",
       },
       "Type": "AWS::SSM::Parameter",
     },
@@ -2105,7 +2114,7 @@ exports[`NetworkVpcV2Stacks Construct(NackStack-Network-us-east-1-Network-Second
 }
 `;
 
-exports[`NetworkVpcV2Stacks Construct(RouteEntriesStack-Network-us-east-1-Network-Inspection-V2):  Snapshot Test 1`] = `
+exports[`NetworkVpcV2Stacks > Construct(RouteEntriesStack-Network-us-east-1-Network-Inspection-V2):  Snapshot Test 1`] = `
 {
   "Metadata": {
     "lzaLookup": {
@@ -2144,7 +2153,7 @@ exports[`NetworkVpcV2Stacks Construct(RouteEntriesStack-Network-us-east-1-Networ
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -2155,7 +2164,7 @@ exports[`NetworkVpcV2Stacks Construct(RouteEntriesStack-Network-us-east-1-Networ
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -2212,7 +2221,7 @@ exports[`NetworkVpcV2Stacks Construct(RouteEntriesStack-Network-us-east-1-Networ
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -2223,7 +2232,7 @@ exports[`NetworkVpcV2Stacks Construct(RouteEntriesStack-Network-us-east-1-Networ
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -2410,7 +2419,7 @@ exports[`NetworkVpcV2Stacks Construct(RouteEntriesStack-Network-us-east-1-Networ
       "Properties": {
         "Name": "/accelerator/AWSAccelerator-RouteEntriesStack-Network-Inspection-V2-555555555555-us-east-1/version",
         "Type": "String",
-        "Value": "1.13.0",
+        "Value": "1.15.0",
       },
       "Type": "AWS::SSM::Parameter",
     },
@@ -2428,7 +2437,7 @@ exports[`NetworkVpcV2Stacks Construct(RouteEntriesStack-Network-us-east-1-Networ
 }
 `;
 
-exports[`NetworkVpcV2Stacks Construct(RouteEntriesStack-Network-us-east-1-Network-Secondary):  Snapshot Test 1`] = `
+exports[`NetworkVpcV2Stacks > Construct(RouteEntriesStack-Network-us-east-1-Network-Secondary):  Snapshot Test 1`] = `
 {
   "Metadata": {
     "lzaLookup": {
@@ -2499,7 +2508,7 @@ exports[`NetworkVpcV2Stacks Construct(RouteEntriesStack-Network-us-east-1-Networ
       "Properties": {
         "Name": "/accelerator/AWSAccelerator-RouteEntriesStack-Network-Secondary-555555555555-us-east-1/version",
         "Type": "String",
-        "Value": "1.13.0",
+        "Value": "1.15.0",
       },
       "Type": "AWS::SSM::Parameter",
     },
@@ -2517,7 +2526,7 @@ exports[`NetworkVpcV2Stacks Construct(RouteEntriesStack-Network-us-east-1-Networ
 }
 `;
 
-exports[`NetworkVpcV2Stacks Construct(RouteEntriesStack-Network-us-east-1-Network-Secondary-V2):  Snapshot Test 1`] = `
+exports[`NetworkVpcV2Stacks > Construct(RouteEntriesStack-Network-us-east-1-Network-Secondary-V2):  Snapshot Test 1`] = `
 {
   "Metadata": {
     "lzaLookup": {
@@ -2588,7 +2597,7 @@ exports[`NetworkVpcV2Stacks Construct(RouteEntriesStack-Network-us-east-1-Networ
       "Properties": {
         "Name": "/accelerator/AWSAccelerator-RouteEntriesStack-Network-Secondary-V2-555555555555-us-east-1/version",
         "Type": "String",
-        "Value": "1.13.0",
+        "Value": "1.15.0",
       },
       "Type": "AWS::SSM::Parameter",
     },
@@ -2606,7 +2615,7 @@ exports[`NetworkVpcV2Stacks Construct(RouteEntriesStack-Network-us-east-1-Networ
 }
 `;
 
-exports[`NetworkVpcV2Stacks Construct(RouteTableStack-Network-us-east-1-Network-Secondary):  Snapshot Test 1`] = `
+exports[`NetworkVpcV2Stacks > Construct(RouteTableStack-Network-us-east-1-Network-Secondary):  Snapshot Test 1`] = `
 {
   "Metadata": {
     "lzaLookup": {
@@ -2751,7 +2760,7 @@ exports[`NetworkVpcV2Stacks Construct(RouteTableStack-Network-us-east-1-Network-
       "Properties": {
         "Name": "/accelerator/AWSAccelerator-RouteTablesStack-Network-Secondary-555555555555-us-east-1/version",
         "Type": "String",
-        "Value": "1.13.0",
+        "Value": "1.15.0",
       },
       "Type": "AWS::SSM::Parameter",
     },
@@ -2819,7 +2828,7 @@ exports[`NetworkVpcV2Stacks Construct(RouteTableStack-Network-us-east-1-Network-
 }
 `;
 
-exports[`NetworkVpcV2Stacks Construct(RouteTableStack-Network-us-east-1-Network-Secondary-V2):  Snapshot Test 1`] = `
+exports[`NetworkVpcV2Stacks > Construct(RouteTableStack-Network-us-east-1-Network-Secondary-V2):  Snapshot Test 1`] = `
 {
   "Metadata": {
     "lzaLookup": {
@@ -2939,7 +2948,7 @@ exports[`NetworkVpcV2Stacks Construct(RouteTableStack-Network-us-east-1-Network-
       "Properties": {
         "Name": "/accelerator/AWSAccelerator-RouteTablesStack-Network-Secondary-V2-555555555555-us-east-1/version",
         "Type": "String",
-        "Value": "1.13.0",
+        "Value": "1.15.0",
       },
       "Type": "AWS::SSM::Parameter",
     },
@@ -2997,7 +3006,7 @@ exports[`NetworkVpcV2Stacks Construct(RouteTableStack-Network-us-east-1-Network-
 }
 `;
 
-exports[`NetworkVpcV2Stacks Construct(SecurityGroupStack-Network-us-east-1-Network-Secondary):  Snapshot Test 1`] = `
+exports[`NetworkVpcV2Stacks > Construct(SecurityGroupStack-Network-us-east-1-Network-Secondary):  Snapshot Test 1`] = `
 {
   "Metadata": {
     "lzaLookup": {
@@ -3017,7 +3026,7 @@ exports[`NetworkVpcV2Stacks Construct(SecurityGroupStack-Network-us-east-1-Netwo
       "Properties": {
         "Name": "/accelerator/AWSAccelerator-SecurityGroupsStack-Network-Secondary-555555555555-us-east-1/version",
         "Type": "String",
-        "Value": "1.13.0",
+        "Value": "1.15.0",
       },
       "Type": "AWS::SSM::Parameter",
     },
@@ -3035,7 +3044,7 @@ exports[`NetworkVpcV2Stacks Construct(SecurityGroupStack-Network-us-east-1-Netwo
 }
 `;
 
-exports[`NetworkVpcV2Stacks Construct(SecurityGroupStack-Network-us-east-1-Network-Secondary-V2):  Snapshot Test 1`] = `
+exports[`NetworkVpcV2Stacks > Construct(SecurityGroupStack-Network-us-east-1-Network-Secondary-V2):  Snapshot Test 1`] = `
 {
   "Metadata": {
     "lzaLookup": {
@@ -3055,7 +3064,7 @@ exports[`NetworkVpcV2Stacks Construct(SecurityGroupStack-Network-us-east-1-Netwo
       "Properties": {
         "Name": "/accelerator/AWSAccelerator-SecurityGroupsStack-Network-Secondary-V2-555555555555-us-east-1/version",
         "Type": "String",
-        "Value": "1.13.0",
+        "Value": "1.15.0",
       },
       "Type": "AWS::SSM::Parameter",
     },
@@ -3073,7 +3082,7 @@ exports[`NetworkVpcV2Stacks Construct(SecurityGroupStack-Network-us-east-1-Netwo
 }
 `;
 
-exports[`NetworkVpcV2Stacks Construct(SubnetShareStack-Network-us-east-1-Network-Secondary):  Snapshot Test 1`] = `
+exports[`NetworkVpcV2Stacks > Construct(SubnetShareStack-Network-us-east-1-Network-Secondary):  Snapshot Test 1`] = `
 {
   "Metadata": {
     "lzaLookup": {
@@ -3093,7 +3102,7 @@ exports[`NetworkVpcV2Stacks Construct(SubnetShareStack-Network-us-east-1-Network
       "Properties": {
         "Name": "/accelerator/AWSAccelerator-SubnetsShareStack-Network-Secondary-555555555555-us-east-1/version",
         "Type": "String",
-        "Value": "1.13.0",
+        "Value": "1.15.0",
       },
       "Type": "AWS::SSM::Parameter",
     },
@@ -3111,7 +3120,7 @@ exports[`NetworkVpcV2Stacks Construct(SubnetShareStack-Network-us-east-1-Network
 }
 `;
 
-exports[`NetworkVpcV2Stacks Construct(SubnetShareStack-Network-us-east-1-Network-Secondary-V2):  Snapshot Test 1`] = `
+exports[`NetworkVpcV2Stacks > Construct(SubnetShareStack-Network-us-east-1-Network-Secondary-V2):  Snapshot Test 1`] = `
 {
   "Metadata": {
     "lzaLookup": {
@@ -3143,7 +3152,7 @@ exports[`NetworkVpcV2Stacks Construct(SubnetShareStack-Network-us-east-1-Network
         "Description": "Custom resource provider to put cross-account ssm parameter value",
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -3154,7 +3163,7 @@ exports[`NetworkVpcV2Stacks Construct(SubnetShareStack-Network-us-east-1-Network
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -3205,6 +3214,9 @@ exports[`NetworkVpcV2Stacks Construct(SubnetShareStack-Network-us-east-1-Network
                   "Action": [
                     "ssm:DeleteParameter",
                     "ssm:PutParameter",
+                    "ssm:GetParameters",
+                    "ssm:AddTagsToResource",
+                    "ssm:RemoveTagsFromResource",
                   ],
                   "Effect": "Allow",
                   "Resource": [
@@ -3318,7 +3330,7 @@ exports[`NetworkVpcV2Stacks Construct(SubnetShareStack-Network-us-east-1-Network
       "Properties": {
         "Name": "/accelerator/AWSAccelerator-SubnetsShareStack-Network-Secondary-V2-555555555555-us-east-1/version",
         "Type": "String",
-        "Value": "1.13.0",
+        "Value": "1.15.0",
       },
       "Type": "AWS::SSM::Parameter",
     },
@@ -3336,7 +3348,7 @@ exports[`NetworkVpcV2Stacks Construct(SubnetShareStack-Network-us-east-1-Network
 }
 `;
 
-exports[`NetworkVpcV2Stacks Construct(SubnetStack-Network-us-east-1-Network-Secondary):  Snapshot Test 1`] = `
+exports[`NetworkVpcV2Stacks > Construct(SubnetStack-Network-us-east-1-Network-Secondary):  Snapshot Test 1`] = `
 {
   "Metadata": {
     "lzaLookup": {
@@ -3379,7 +3391,7 @@ exports[`NetworkVpcV2Stacks Construct(SubnetStack-Network-us-east-1-Network-Seco
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -3390,7 +3402,7 @@ exports[`NetworkVpcV2Stacks Construct(SubnetStack-Network-us-east-1-Network-Seco
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -4098,7 +4110,7 @@ exports[`NetworkVpcV2Stacks Construct(SubnetStack-Network-us-east-1-Network-Seco
       "Properties": {
         "Name": "/accelerator/AWSAccelerator-SubnetsStack-Network-Secondary-555555555555-us-east-1/version",
         "Type": "String",
-        "Value": "1.13.0",
+        "Value": "1.15.0",
       },
       "Type": "AWS::SSM::Parameter",
     },
@@ -4364,7 +4376,7 @@ exports[`NetworkVpcV2Stacks Construct(SubnetStack-Network-us-east-1-Network-Seco
 }
 `;
 
-exports[`NetworkVpcV2Stacks Construct(SubnetStack-Network-us-east-1-Network-Secondary-V2):  Snapshot Test 1`] = `
+exports[`NetworkVpcV2Stacks > Construct(SubnetStack-Network-us-east-1-Network-Secondary-V2):  Snapshot Test 1`] = `
 {
   "Metadata": {
     "lzaLookup": {
@@ -4407,7 +4419,7 @@ exports[`NetworkVpcV2Stacks Construct(SubnetStack-Network-us-east-1-Network-Seco
         },
         "Environment": {
           "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
+            "SOLUTION_ID": "AwsSolution/SO0199/1.15.0",
           },
         },
         "Handler": "__entrypoint__.handler",
@@ -4418,7 +4430,7 @@ exports[`NetworkVpcV2Stacks Construct(SubnetStack-Network-us-east-1-Network-Seco
             "Arn",
           ],
         },
-        "Runtime": "nodejs20.x",
+        "Runtime": "nodejs22.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -5066,7 +5078,7 @@ exports[`NetworkVpcV2Stacks Construct(SubnetStack-Network-us-east-1-Network-Seco
       "Properties": {
         "Name": "/accelerator/AWSAccelerator-SubnetsStack-Network-Secondary-V2-555555555555-us-east-1/version",
         "Type": "String",
-        "Value": "1.13.0",
+        "Value": "1.15.0",
       },
       "Type": "AWS::SSM::Parameter",
     },
@@ -5303,7 +5315,7 @@ exports[`NetworkVpcV2Stacks Construct(SubnetStack-Network-us-east-1-Network-Seco
 }
 `;
 
-exports[`NetworkVpcV2Stacks Construct(SubnetStack-SharedServices-us-east-1-SharedServices-Main-V2):  Snapshot Test 1`] = `
+exports[`NetworkVpcV2Stacks > Construct(SubnetStack-SharedServices-us-east-1-SharedServices-Main-V2):  Snapshot Test 1`] = `
 {
   "Metadata": {
     "lzaLookup": {
@@ -5339,159 +5351,6 @@ exports[`NetworkVpcV2Stacks Construct(SubnetStack-SharedServices-us-east-1-Share
     },
   },
   "Resources": {
-    "CustomGetResourceShareCustomResourceProviderHandler5DB0EF7A": {
-      "DependsOn": [
-        "CustomGetResourceShareCustomResourceProviderRoleBC3FCEEF",
-      ],
-      "Properties": {
-        "Code": {
-          "S3Bucket": "cdk-hnb659fds-assets-444444444444-us-east-1",
-          "S3Key": "REPLACED-GENERATED-NAME.zip",
-        },
-        "Environment": {
-          "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
-          },
-        },
-        "Handler": "__entrypoint__.handler",
-        "MemorySize": 512,
-        "Role": {
-          "Fn::GetAtt": [
-            "CustomGetResourceShareCustomResourceProviderRoleBC3FCEEF",
-            "Arn",
-          ],
-        },
-        "Runtime": "nodejs20.x",
-        "Timeout": 900,
-      },
-      "Type": "AWS::Lambda::Function",
-    },
-    "CustomGetResourceShareCustomResourceProviderRoleBC3FCEEF": {
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Statement": [
-            {
-              "Action": "sts:AssumeRole",
-              "Effect": "Allow",
-              "Principal": {
-                "Service": "lambda.amazonaws.com",
-              },
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "ManagedPolicyArns": [
-          {
-            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-          },
-        ],
-        "Policies": [
-          {
-            "PolicyDocument": {
-              "Statement": [
-                {
-                  "Action": [
-                    "ram:AcceptResourceShareInvitation",
-                    "ram:GetResourceShareInvitations",
-                    "ram:GetResourceShares",
-                  ],
-                  "Effect": "Allow",
-                  "Resource": "*",
-                },
-              ],
-              "Version": "2012-10-17",
-            },
-            "PolicyName": "Inline",
-          },
-        ],
-      },
-      "Type": "AWS::IAM::Role",
-    },
-    "CustomGetResourceShareItemCustomResourceProviderHandlerE72D791B": {
-      "DependsOn": [
-        "CustomGetResourceShareItemCustomResourceProviderRoleA7181EBA",
-      ],
-      "Properties": {
-        "Code": {
-          "S3Bucket": "cdk-hnb659fds-assets-444444444444-us-east-1",
-          "S3Key": "REPLACED-GENERATED-NAME.zip",
-        },
-        "Environment": {
-          "Variables": {
-            "SOLUTION_ID": "AwsSolution/SO0199/1.13.0",
-          },
-        },
-        "Handler": "__entrypoint__.handler",
-        "MemorySize": 512,
-        "Role": {
-          "Fn::GetAtt": [
-            "CustomGetResourceShareItemCustomResourceProviderRoleA7181EBA",
-            "Arn",
-          ],
-        },
-        "Runtime": "nodejs20.x",
-        "Timeout": 900,
-      },
-      "Type": "AWS::Lambda::Function",
-    },
-    "CustomGetResourceShareItemCustomResourceProviderLogGroup6DB08FC0": {
-      "DeletionPolicy": "Delete",
-      "Properties": {
-        "LogGroupName": {
-          "Fn::Join": [
-            "",
-            [
-              "/aws/lambda/",
-              {
-                "Ref": "CustomGetResourceShareItemCustomResourceProviderHandlerE72D791B",
-              },
-            ],
-          ],
-        },
-        "RetentionInDays": 3653,
-      },
-      "Type": "AWS::Logs::LogGroup",
-      "UpdateReplacePolicy": "Delete",
-    },
-    "CustomGetResourceShareItemCustomResourceProviderRoleA7181EBA": {
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Statement": [
-            {
-              "Action": "sts:AssumeRole",
-              "Effect": "Allow",
-              "Principal": {
-                "Service": "lambda.amazonaws.com",
-              },
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "ManagedPolicyArns": [
-          {
-            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-          },
-        ],
-        "Policies": [
-          {
-            "PolicyDocument": {
-              "Statement": [
-                {
-                  "Action": [
-                    "ram:ListResources",
-                  ],
-                  "Effect": "Allow",
-                  "Resource": "*",
-                },
-              ],
-              "Version": "2012-10-17",
-            },
-            "PolicyName": "Inline",
-          },
-        ],
-      },
-      "Type": "AWS::IAM::Role",
-    },
     "SharedServicesAppARouteTableAssociation": {
       "Metadata": {
         "lzaLookup": {
@@ -5586,57 +5445,6 @@ exports[`NetworkVpcV2Stacks Construct(SubnetStack-SharedServices-us-east-1-Share
         },
       },
       "Type": "AWS::EC2::SubnetRouteTableAssociation",
-    },
-    "SharedServicesMainTgwAttachmentNetworkAccountNetworkMainTgwResourceShare256DAAD3": {
-      "DeletionPolicy": "Delete",
-      "Properties": {
-        "ServiceToken": {
-          "Fn::GetAtt": [
-            "CustomGetResourceShareCustomResourceProviderHandler5DB0EF7A",
-            "Arn",
-          ],
-        },
-        "name": "Network-Main_TransitGatewayShare",
-        "owningAccountId": "555555555555",
-        "resourceOwner": "OTHER-ACCOUNTS",
-        "uuid": "REPLACED-UUID",
-      },
-      "Type": "Custom::GetResourceShare",
-      "UpdateReplacePolicy": "Delete",
-    },
-    "SharedServicesMainTgwAttachmentNetworkAccountNetworkMainTgwResourceShareItemFD10BDEA": {
-      "DeletionPolicy": "Delete",
-      "DependsOn": [
-        "CustomGetResourceShareItemCustomResourceProviderLogGroup6DB08FC0",
-      ],
-      "Properties": {
-        "ServiceToken": {
-          "Fn::GetAtt": [
-            "CustomGetResourceShareItemCustomResourceProviderHandlerE72D791B",
-            "Arn",
-          ],
-        },
-        "resourceOwner": "OTHER-ACCOUNTS",
-        "resourceShareArn": {
-          "Fn::Join": [
-            "",
-            [
-              "arn:",
-              {
-                "Ref": "AWS::Partition",
-              },
-              ":ram:us-east-1:555555555555:resource-share/",
-              {
-                "Ref": "SharedServicesMainTgwAttachmentNetworkAccountNetworkMainTgwResourceShare256DAAD3",
-              },
-            ],
-          ],
-        },
-        "resourceType": "ec2:TransitGateway",
-        "uuid": "REPLACED-UUID",
-      },
-      "Type": "Custom::GetResourceShareItem",
-      "UpdateReplacePolicy": "Delete",
     },
     "SharedServicesMainV2SharedServicesAppANonIpamSubnet": {
       "Metadata": {
@@ -5758,49 +5566,11 @@ exports[`NetworkVpcV2Stacks Construct(SubnetStack-SharedServices-us-east-1-Share
       },
       "Type": "AWS::EC2::Subnet",
     },
-    "SharedServicesMainVpcNetworkMainTransitGatewayAttachment259775EC": {
-      "Metadata": {
-        "lzaLookup": {
-          "resourceType": "tgw-vpc-attachment",
-          "transitGatewayAttachmentName": "SharedServices-Main",
-          "transitGatewayName": "Network-Main",
-          "vpcName": "SharedServices-Main-V2",
-        },
-      },
-      "Properties": {
-        "Options": {
-          "ApplianceModeSupport": "disable",
-          "DnsSupport": "enable",
-          "Ipv6Support": "disable",
-        },
-        "SubnetIds": [
-          {
-            "Ref": "SharedServicesMainV2SharedServicesMainTgwAttachANonIpamSubnet",
-          },
-          {
-            "Ref": "SharedServicesMainV2SharedServicesMainTgwAttachBNonIpamSubnet",
-          },
-        ],
-        "Tags": [
-          {
-            "Key": "Name",
-            "Value": "SharedServices-Main",
-          },
-        ],
-        "TransitGatewayId": {
-          "Ref": "SharedServicesMainTgwAttachmentNetworkAccountNetworkMainTgwResourceShareItemFD10BDEA",
-        },
-        "VpcId": {
-          "Ref": "SsmParameterValueacceleratornetworkvpcSharedServicesMainV2idC96584B6F00A464EAD1953AFF4B05118Parameter",
-        },
-      },
-      "Type": "AWS::EC2::TransitGatewayVpcAttachment",
-    },
     "SsmParamAcceleratorVersionFF83282D": {
       "Properties": {
         "Name": "/accelerator/AWSAccelerator-SubnetsStack-SharedServices-Main-V2-444444444444-us-east-1/version",
         "Type": "String",
-        "Value": "1.13.0",
+        "Value": "1.15.0",
       },
       "Type": "AWS::SSM::Parameter",
     },
@@ -5906,19 +5676,6 @@ exports[`NetworkVpcV2Stacks Construct(SubnetStack-SharedServices-us-east-1-Share
       },
       "Type": "AWS::SSM::Parameter",
     },
-    "SsmParamSharedServicesMainV2SharedServicesMainTransitGatewayAttachmentIdB2647A83": {
-      "DependsOn": [
-        "SsmParamSharedServicesMainV2SharedServicesMainTgwAttachBSubnetIpv4CidrBlock68D217F0",
-      ],
-      "Properties": {
-        "Name": "/accelerator/network/vpc/SharedServices-Main-V2/transitGatewayAttachment/SharedServices-Main/id",
-        "Type": "String",
-        "Value": {
-          "Ref": "SharedServicesMainVpcNetworkMainTransitGatewayAttachment259775EC",
-        },
-      },
-      "Type": "AWS::SSM::Parameter",
-    },
     "SsmParamStackId521A78D3": {
       "Properties": {
         "Name": "/accelerator/AWSAccelerator-SubnetsStack-SharedServices-Main-V2-444444444444-us-east-1/stack-id",
@@ -5933,7 +5690,7 @@ exports[`NetworkVpcV2Stacks Construct(SubnetStack-SharedServices-us-east-1-Share
 }
 `;
 
-exports[`NetworkVpcV2Stacks Construct(VpcStack-Network-us-east-1-Network-Secondary):  Snapshot Test 1`] = `
+exports[`NetworkVpcV2Stacks > Construct(VpcStack-Network-us-east-1-Network-Secondary):  Snapshot Test 1`] = `
 {
   "Metadata": {
     "lzaLookup": {
@@ -5990,7 +5747,7 @@ exports[`NetworkVpcV2Stacks Construct(VpcStack-Network-us-east-1-Network-Seconda
       "Type": "AWS::EC2::FlowLog",
     },
     "FlowLogsGroup9B5A57FD": {
-      "DeletionPolicy": "Retain",
+      "DeletionPolicy": "RetainExceptOnCreate",
       "Properties": {
         "RetentionInDays": 3653,
       },
@@ -6173,7 +5930,7 @@ exports[`NetworkVpcV2Stacks Construct(VpcStack-Network-us-east-1-Network-Seconda
       "Properties": {
         "Name": "/accelerator/AWSAccelerator-VpcStack-Network-Secondary-555555555555-us-east-1/version",
         "Type": "String",
-        "Value": "1.13.0",
+        "Value": "1.15.0",
       },
       "Type": "AWS::SSM::Parameter",
     },
@@ -6207,6 +5964,19 @@ exports[`NetworkVpcV2Stacks Construct(VpcStack-Network-us-east-1-Network-Seconda
       },
       "Type": "AWS::SSM::Parameter",
     },
+    "SsmParamNetworkSecondaryVpcIpv4CidrBlock2CF87CAD": {
+      "Properties": {
+        "Name": "/accelerator/network/vpc/Network-Secondary/cidr/ipv4",
+        "Type": "String",
+        "Value": {
+          "Fn::GetAtt": [
+            "NetworkSecondaryVpc",
+            "CidrBlock",
+          ],
+        },
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
     "SsmParamStackId521A78D3": {
       "Properties": {
         "Name": "/accelerator/AWSAccelerator-VpcStack-Network-Secondary-555555555555-us-east-1/stack-id",
@@ -6221,7 +5991,7 @@ exports[`NetworkVpcV2Stacks Construct(VpcStack-Network-us-east-1-Network-Seconda
 }
 `;
 
-exports[`NetworkVpcV2Stacks Construct(VpcStack-Network-us-east-1-Network-Secondary-V2):  Snapshot Test 1`] = `
+exports[`NetworkVpcV2Stacks > Construct(VpcStack-Network-us-east-1-Network-Secondary-V2):  Snapshot Test 1`] = `
 {
   "Metadata": {
     "lzaLookup": {
@@ -6278,7 +6048,7 @@ exports[`NetworkVpcV2Stacks Construct(VpcStack-Network-us-east-1-Network-Seconda
       "Type": "AWS::EC2::FlowLog",
     },
     "FlowLogsGroup9B5A57FD": {
-      "DeletionPolicy": "Retain",
+      "DeletionPolicy": "RetainExceptOnCreate",
       "Properties": {
         "RetentionInDays": 3653,
       },
@@ -6469,7 +6239,7 @@ exports[`NetworkVpcV2Stacks Construct(VpcStack-Network-us-east-1-Network-Seconda
       "Properties": {
         "Name": "/accelerator/AWSAccelerator-VpcStack-Network-Secondary-V2-555555555555-us-east-1/version",
         "Type": "String",
-        "Value": "1.13.0",
+        "Value": "1.15.0",
       },
       "Type": "AWS::SSM::Parameter",
     },
@@ -6499,6 +6269,19 @@ exports[`NetworkVpcV2Stacks Construct(VpcStack-Network-us-east-1-Network-Seconda
         "Type": "String",
         "Value": {
           "Ref": "NetworkSecondaryV2Vpc",
+        },
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+    "SsmParamNetworkSecondaryV2VpcIpv4CidrBlockCDFD77A9": {
+      "Properties": {
+        "Name": "/accelerator/network/vpc/Network-Secondary-V2/cidr/ipv4",
+        "Type": "String",
+        "Value": {
+          "Fn::GetAtt": [
+            "NetworkSecondaryV2Vpc",
+            "CidrBlock",
+          ],
         },
       },
       "Type": "AWS::SSM::Parameter",

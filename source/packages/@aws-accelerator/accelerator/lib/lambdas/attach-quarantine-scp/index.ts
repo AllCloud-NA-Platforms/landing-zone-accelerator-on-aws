@@ -42,7 +42,6 @@ export async function handler(event: any, context: Context): Promise<any> {
     retryStrategy: setRetryStrategy(),
   });
 
-  // eslint-disable-next-line prefer-const
   const policyName: string = process.env['SCP_POLICY_NAME'] ?? '';
 
   const createAccountStatus = JSON.parse(JSON.stringify(event.detail.responseElements.createAccountStatus));
@@ -86,7 +85,12 @@ async function getPolicyId(policyName: string, orgsClient: OrganizationsClient) 
   let nextToken: string | undefined = undefined;
   do {
     const page = await throttlingBackOff(() =>
-      orgsClient.send(new ListPoliciesCommand({ Filter: 'SERVICE_CONTROL_POLICY' })),
+      orgsClient.send(
+        new ListPoliciesCommand({
+          Filter: 'SERVICE_CONTROL_POLICY',
+          ...(nextToken && { NextToken: nextToken }),
+        }),
+      ),
     );
     for (const scpPolicy of page.Policies ?? []) {
       console.log(`Policy named ${scpPolicy.Name} added to list`);

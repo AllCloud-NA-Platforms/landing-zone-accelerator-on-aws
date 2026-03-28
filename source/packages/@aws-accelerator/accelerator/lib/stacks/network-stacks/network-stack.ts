@@ -34,12 +34,14 @@ import {
   VpcTemplatesConfig,
   VpnConnectionConfig,
 } from '@aws-accelerator/config';
+import * as path from 'path';
 import {
   CloudWatchLogGroups,
   IIpamSubnet,
   IResourceShareItem,
   IpamSubnet,
   LzaLambda,
+  OutsideIpAddressType,
   PrefixList,
   ResourceShare,
   ResourceShareItem,
@@ -53,7 +55,7 @@ import {
   VpnConnectionProps,
   VpnTunnelOptionsSpecifications,
 } from '@aws-accelerator/constructs';
-import { SsmResourceType } from '@aws-accelerator/utils/lib/ssm-parameter-path';
+import { SsmResourceType, isArn, MetadataKeys } from '@aws-accelerator/utils';
 import * as cdk from 'aws-cdk-lib';
 import { NagSuppressions } from 'cdk-nag';
 import { Construct } from 'constructs';
@@ -75,9 +77,7 @@ import {
   SecurityGroupRuleProps,
 } from './utils/security-group-utils';
 import { hasAdvancedVpnOptions, isIpv4 } from './utils/validation-utils';
-import { isArn } from '@aws-accelerator/utils/lib/is-arn';
-import { MetadataKeys } from '@aws-accelerator/utils/lib/common-types';
-import { LZAResourceLookup, LZAResourceLookupType } from '../../../utils/lza-resource-lookup';
+import { LZAResourceLookup, LZAResourceLookupType } from '@aws-accelerator/accelerator';
 
 /**
  * Resource share type for RAM resource shares
@@ -919,6 +919,65 @@ export abstract class NetworkStack extends AcceleratorStack {
   }
 
   /**
+   * Create security groups for shared VPCs in NetworkAssociationsStack.
+   * This method does not use lzaLookup since NetworkAssociationsStack templates are not downloaded.
+   */
+  public createSecurityGroupsForSharedVpcs(
+    vpcResources: (VpcConfig | VpcTemplatesConfig)[],
+    vpcMap: Map<string, Vpc> | Map<string, string>,
+    subnetMap: Map<string, Subnet> | Map<string, IIpamSubnet>,
+    prefixListMap: Map<string, PrefixList> | Map<string, string>,
+  ): Map<string, SecurityGroup> {
+    const securityGroupMap = new Map<string, SecurityGroup>();
+
+    for (const vpcItem of vpcResources) {
+      for (const securityGroupItem of vpcItem.securityGroups ?? []) {
+        this.logger.info(`Processing rules for ${securityGroupItem.name} in VPC ${vpcItem.name}`);
+
+        // Process configured rules
+        const processedIngressRules = processSecurityGroupIngressRules(
+          this.vpcResources,
+          securityGroupItem,
+          subnetMap,
+          prefixListMap,
+        );
+
+        const allIngressRule = containsAllIngressRule(processedIngressRules);
+        const processedEgressRules = processSecurityGroupEgressRules(
+          this.vpcResources,
+          securityGroupItem,
+          subnetMap,
+          prefixListMap,
+        );
+
+        // Get VPC
+        const vpc = getVpc(vpcMap, vpcItem.name);
+        if (!vpc) {
+          continue;
+        }
+
+        // Create security group
+        const securityGroup = this.createSecurityGroupItem(
+          vpcItem,
+          vpc,
+          securityGroupItem,
+          processedIngressRules,
+          processedEgressRules,
+          allIngressRule,
+        );
+
+        if (securityGroup) {
+          securityGroupMap.set(`${vpcItem.name}_${securityGroupItem.name}`, securityGroup);
+        }
+      }
+      // Create security group rules that reference other security groups
+      this.createSecurityGroupSgSourcesForSharedVpcs(vpcItem, subnetMap, prefixListMap, securityGroupMap);
+    }
+
+    return securityGroupMap;
+  }
+
+  /**
    * Create security group rules that reference other security groups
    * @param vpcItem
    * @param subnetMap
@@ -1003,6 +1062,69 @@ export abstract class NetworkStack extends AcceleratorStack {
           });
           this.addMetadataToSecurityGroupRule(rule, { rule: egressRule.rule, ...baseMetadata });
         });
+    }
+  }
+
+  /**
+   * Create security group rules that reference other security groups for shared VPCs.
+   * This method does not use lzaLookup since NetworkAssociationsStack templates are not downloaded.
+   */
+  private createSecurityGroupSgSourcesForSharedVpcs(
+    vpcItem: VpcConfig | VpcTemplatesConfig,
+    subnetMap: Map<string, Subnet> | Map<string, IIpamSubnet>,
+    prefixListMap: Map<string, PrefixList> | Map<string, string>,
+    securityGroupMap: Map<string, SecurityGroup>,
+  ) {
+    for (const securityGroupItem of vpcItem.securityGroups ?? []) {
+      // skip if managed by asea
+      if (this.isManagedByAsea(AseaResourceType.EC2_SECURITY_GROUP, `${vpcItem.name}/${securityGroupItem.name}`)) {
+        this.logger.info(`Skipping security group ${securityGroupItem.name} in VPC ${vpcItem.name}`);
+        continue;
+      }
+      const securityGroup = getSecurityGroup(securityGroupMap, vpcItem.name, securityGroupItem.name) as SecurityGroup;
+      const ingressRules = processSecurityGroupSgIngressSources(
+        this.vpcResources,
+        vpcItem,
+        securityGroupItem,
+        subnetMap,
+        prefixListMap,
+        securityGroupMap,
+        this.lzaLookup,
+      );
+      const egressRules = processSecurityGroupSgEgressSources(
+        this.vpcResources,
+        vpcItem,
+        securityGroupItem,
+        subnetMap,
+        prefixListMap,
+        securityGroupMap,
+        this.lzaLookup,
+      );
+
+      const baseMetadata = {
+        vpcName: vpcItem.name,
+        sourceSecurityGroupName: securityGroupItem.name,
+        account: this.account,
+        region: this.region,
+      };
+
+      // Create ingress rules
+      ingressRules.forEach(ingressRule => {
+        const rule = securityGroup.addIngressRule(ingressRule.logicalId, {
+          sourceSecurityGroup: ingressRule.rule.targetSecurityGroup,
+          ...ingressRule.rule,
+        });
+        this.addMetadataToSecurityGroupRule(rule, { rule: ingressRule.rule, ...baseMetadata });
+      });
+
+      // Create egress rules
+      egressRules.forEach(egressRule => {
+        const rule = securityGroup.addEgressRule(egressRule.logicalId, {
+          destinationSecurityGroup: egressRule.rule.targetSecurityGroup,
+          ...egressRule.rule,
+        });
+        this.addMetadataToSecurityGroupRule(rule, { rule: egressRule.rule, ...baseMetadata });
+      });
     }
   }
 
@@ -1291,7 +1413,10 @@ export abstract class NetworkStack extends AcceleratorStack {
     //
     // Create Lambda handler
     return new LzaLambda(this, 'VpnOnEventHandler', {
-      assetPath: '../constructs/lib/aws-ec2/custom-vpn-connection/dist',
+      assetPath: path.resolve(
+        __dirname,
+        '../../../../../@aws-accelerator/constructs/lib/aws-ec2/custom-vpn-connection/dist',
+      ),
       environmentEncryptionKmsKey: this.lambdaKey,
       cloudWatchLogKmsKey: this.cloudwatchKey,
       cloudWatchLogRetentionInDays: this.logRetention,
@@ -1315,6 +1440,7 @@ export abstract class NetworkStack extends AcceleratorStack {
     owningRegion?: string;
     transitGatewayId?: string;
     virtualPrivateGateway?: string;
+    directConnectGateway?: string;
     metadata?: { [key: string]: string | number | boolean | undefined };
   }): VpnConnectionProps {
     const hasCrossAccountOptions = options.owningAccountId || options.owningRegion ? true : false;
@@ -1324,6 +1450,9 @@ export abstract class NetworkStack extends AcceleratorStack {
       customerGatewayId: options.customerGatewayId,
       amazonIpv4NetworkCidr: options.vpnItem.amazonIpv4NetworkCidr,
       customerIpv4NetworkCidr: options.vpnItem.customerIpv4NetworkCidr,
+      amazonIpv6NetworkCidr: options.vpnItem.amazonIpv6NetworkCidr,
+      customerIpv6NetworkCidr: options.vpnItem.customerIpv6NetworkCidr,
+      outsideIpAddressType: options.vpnItem.outsideIpAddressType as OutsideIpAddressType,
       customResourceHandler:
         hasAdvancedVpnOptions(options.vpnItem) || hasCrossAccountOptions ? options.customResourceHandler : undefined,
       enableVpnAcceleration: options.vpnItem.enableVpnAcceleration,
@@ -1412,6 +1541,7 @@ export abstract class NetworkStack extends AcceleratorStack {
         replayWindowSize: tunnel.replayWindowSize,
         startupAction: tunnel.startupAction,
         tunnelInsideCidr: tunnel.tunnelInsideCidr,
+        tunnelInsideIpv6Cidr: tunnel.tunnelInsideIpv6Cidr,
         tunnelLifecycleControl: tunnel.tunnelLifecycleControl,
       });
     }
@@ -1451,6 +1581,7 @@ export abstract class NetworkStack extends AcceleratorStack {
         logGroupName: logGroupName ? `${this.acceleratorPrefix}${logGroupName}` : undefined,
         encryptionKey: this.cloudwatchKey,
         retention: this.logRetention,
+        removalPolicy: cdk.RemovalPolicy.RETAIN_ON_UPDATE_OR_DELETE,
       }).logGroupArn;
     }
   }

@@ -14,7 +14,7 @@
 import { CUSTOM_RESOURCE_PROVIDER_RUNTIME } from '@aws-accelerator/utils/lib/lambda';
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-const path = require('path');
+import * as path from 'path';
 
 /**
  * Construction properties for an S3 Bucket object.
@@ -59,6 +59,7 @@ export class SsmSessionManagerSettings extends Construct {
         retention: props.logRetentionInDays,
         logGroupName: logGroupName,
         encryptionKey: props.cloudWatchEncryptionKey,
+        removalPolicy: cdk.RemovalPolicy.RETAIN_ON_UPDATE_OR_DELETE,
       });
       sessionManagerLogGroupName = sessionManagerLogGroup.logGroupName;
     }
@@ -79,7 +80,7 @@ export class SsmSessionManagerSettings extends Construct {
       policyStatements: [
         {
           Effect: 'Allow',
-          Action: ['ssm:DescribeDocument', 'ssm:CreateDocument', 'ssm:UpdateDocument'],
+          Action: ['ssm:CreateDocument', 'ssm:GetDocument', 'ssm:UpdateDocument'],
           Resource: '*',
         },
       ],

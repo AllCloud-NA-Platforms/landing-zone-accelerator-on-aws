@@ -70,7 +70,6 @@ export enum AcceleratorModules {
    * Move AWS Accounts to destination AWS Organizations Organizational Unit (OU) module
    */
   MOVE_ACCOUNTS = 'move-accounts',
-
   /**
    * Retrieves cross account CloudFormation Templates
    */
@@ -94,6 +93,35 @@ export enum AcceleratorModules {
    * For more information on SSM Block Public Document Sharing, please refer the [document](https://docs.aws.amazon.com/systems-manager/latest/userguide/document-public-access-block.html)
    */
   SSM_BLOCK_PUBLIC_DOCUMENT_SHARING = 'ssm-block-public-document-sharing',
+  /**
+   * Sets an account alias
+   */
+  MANAGE_ACCOUNTS_ALIAS = 'manage-accounts-alias',
+
+  /**
+   * Accelerator prerequisites module
+   */
+  ACCELERATOR_PREREQUISITES = 'accelerator-prerequisites',
+
+  /**
+   * Pipeline prerequisites module
+   */
+  PIPELINE_PREREQUISITES = 'pipeline-prerequisites',
+
+  /**
+   * Delete default VPCs in accounts
+   */
+  DELETE_DEFAULT_VPC = 'delete-default-vpc',
+
+  /**
+   * Manage Security Hub Automation rules module
+   */
+  MANAGE_AUTOMATION_RULES = 'manage-automation-rules',
+
+  /**
+   * Manage Control Tower accounts enrollment
+   */
+  ENROLL_ACCOUNTS = 'enroll-accounts',
 
   /**
    * An Example module which is executed in `PREPARE` stage
